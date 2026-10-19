@@ -1,12 +1,15 @@
 ---
 /* A responsive photo: AVIF first, WebP behind it, JPEG last. Width and height
    are always set, so nothing shifts while it loads. `ratio` crops to a fixed
-   frame (for cards); without it the photo keeps its own shape. */
+   frame (for cards); without it the photo keeps its own shape. Takes a photo
+   from the site's own library (`id`) or a gallery photo's file (`src` + `alt`). */
+import type { ImageMetadata } from 'astro';
 import { getImage } from 'astro:assets';
 import { photo, type PhotoId } from '../data/photos';
 
 interface Props {
-  id: PhotoId;
+  id?: PhotoId;
+  src?: ImageMetadata;
   widths?: number[];
   sizes?: string;
   /** width / height, for a fixed crop. */
@@ -19,9 +22,9 @@ interface Props {
   quality?: number;
 }
 
-const { id, widths = [480, 800, 1200, 1600], sizes = '(min-width: 60rem) 50vw, 100vw', ratio, focus = 'center', alt, eager = false, class: cls, quality = 60 } = Astro.props;
+const { id, src, widths = [480, 800, 1200, 1600], sizes = '(min-width: 60rem) 50vw, 100vw', ratio, focus = 'center', alt, eager = false, class: cls, quality = 60 } = Astro.props;
 
-const p = photo(id);
+const p = src ? { src, alt: alt ?? '' } : photo(id!);
 const r = ratio ?? p.src.width / p.src.height;
 // never ask for more pixels than the crop can give
 const maxW = Math.min(p.src.width, Math.floor(p.src.height * r));

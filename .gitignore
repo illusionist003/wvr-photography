@@ -5,3 +5,5 @@ dist/
 _source/
 .DS_Store
 .env
+src/assets/gallery/
+public/gallery-version.txt

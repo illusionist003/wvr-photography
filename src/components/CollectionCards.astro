@@ -19,7 +19,7 @@ const { items, eagerFirst = false } = Astro.props;
     items.map((c, i) => (
       <li>
         <a class="cc__card" href={href(collectionPath(c))}>
-          <Photo id={c.cover} ratio={4 / 3} eager={eagerFirst && i === 0} widths={[480, 720, 960]} sizes="(min-width: 64rem) 32vw, (min-width: 40rem) 50vw, 100vw" class="frame zoom cc__img" />
+          <Photo src={c.cover.src} alt={c.cover.alt} ratio={4 / 3} eager={eagerFirst && i === 0} widths={[480, 720, 960]} sizes="(min-width: 64rem) 32vw, (min-width: 40rem) 50vw, 100vw" class="frame zoom cc__img" />
           <span class="cc__body">
             <span class="cc__title h3">{c.title}</span>
             <span class="cc__meta fine">

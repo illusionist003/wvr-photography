@@ -1,8 +1,10 @@
 ---
 /* One gallery, at the address his Wix site used
-   (/portfolio-collections/<slug>). The photos come straight after a short
-   heading; then the review from that client, if there is one, the way to book
-   the same kind of shoot, and the neighbouring galleries. */
+   (/portfolio-collections/<slug>). Built from what Matthew publishes in WVR
+   Studio. The photos come straight after a short heading; then the review
+   from that client, if there is one, the way to book the same kind of shoot,
+   and the neighbouring galleries. Title and description are built so they
+   always fit search limits, whatever he types. */
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
 import Gallery from '../../components/Gallery.astro';
@@ -12,6 +14,7 @@ import CollectionCards from '../../components/CollectionCards.astro';
 import ContactBand from '../../components/ContactBand.astro';
 import Icon from '../../components/Icon.astro';
 import { COLLECTIONS, collectionPath, type Collection } from '../../data/collections';
+import { REVIEWS } from '../../data/reviews';
 import { service } from '../../data/services';
 import { href } from '../../lib/paths';
 import { breadcrumbs } from '../../lib/schema';
@@ -23,16 +26,28 @@ export function getStaticPaths() {
 const { c } = Astro.props as { c: Collection };
 const s = service(c.service);
 const at = COLLECTIONS.indexOf(c);
-const others = [1, 2, 3].map((k) => COLLECTIONS[(at + k) % COLLECTIONS.length]);
+const others = COLLECTIONS.length > 1 ? [1, 2, 3].map((k) => COLLECTIONS[(at + k) % COLLECTIONS.length]).filter((o, i, a) => o !== c && a.indexOf(o) === i) : [];
 const path = collectionPath(c);
 const KIND = { events: 'Event', products: 'Product', portraits: 'Portrait or headshot' } as const;
+const review = REVIEWS.find((r) => r.collection === c.slug);
 
-const title = `${c.title} ${c.title.length > 22 ? 'Gallery' : 'Photography Gallery'} | WVR Photography`;
-const description = `${c.blurb} Photographed by Matthew Weaver of WVR Photography in Fenton, MI.`.slice(0, 160);
+function clamp(text: string, max: number) {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  return `${cut.slice(0, cut.lastIndexOf(' ') > 40 ? cut.lastIndexOf(' ') : cut.length).replace(/[\s,.;:]+$/, '')}…`;
+}
+
+const brand = ' | WVR Photography';
+const longTitle = `${c.title} Gallery${brand}`;
+const title = longTitle.length < 25 ? `${c.title} Gallery${brand}, Fenton MI` : longTitle.length <= 70 ? longTitle : `${clamp(c.title, 70 - brand.length)}${brand}`;
+
+const tail = 'Photographed by Matthew Weaver of WVR Photography in Fenton, MI.';
+const lead = c.blurb ? `${c.blurb.replace(/[.!?]?$/, '.')} ${tail}` : `${c.title}: ${c.photos.length} ${c.photos.length === 1 ? 'photo' : 'photos'} from a ${c.kind.toLowerCase()} shoot. ${tail}`;
+const description = clamp(lead.length >= 70 ? lead : `${lead} See the gallery and get a free quote.`, 160);
 ---
 
-<Base title={title} description={description.length >= 70 ? description : `${description} See the gallery.`} path={path} schema={[breadcrumbs([{ name: 'Portfolio', path: '/portfolio/' }, { name: c.title, path }])]}>
-  <PageHead kicker={c.kind} title={c.title} lede={c.blurb} crumbs={[{ name: 'Portfolio', path: '/portfolio/' }, { name: c.title, path }]} />
+<Base title={title} description={description} path={path} schema={[breadcrumbs([{ name: 'Portfolio', path: '/portfolio/' }, { name: c.title, path }])]}>
+  <PageHead user kicker={c.kind} title={c.title} lede={c.blurb || undefined} crumbs={[{ name: 'Portfolio', path: '/portfolio/' }, { name: c.title, path }]} />
 
   <section class="band--tight ink gal" aria-label={`${c.title} photos`}>
     <div class="wrap">
@@ -45,11 +60,11 @@ const description = `${c.blurb} Photographed by Matthew Weaver of WVR Photograph
   </section>
 
   {
-    c.review && (
+    review && (
       <section class="band white" aria-labelledby="said">
         <div class="wrap narrow">
           <SectionHead id="said" eyebrow="From the client" title="What they said." layout="left" />
-          <Reviews ids={[c.review]} />
+          <Reviews ids={[review.id]} />
         </div>
       </section>
     )
@@ -57,12 +72,16 @@ const description = `${c.blurb} Photographed by Matthew Weaver of WVR Photograph
 
   <ContactBand title="Planning a shoot like this? Let's **talk.**" intro={`Tell me about it and I will get back to you with a free quote. More on [${s.name.toLowerCase()}](${s.path}).`} kind={KIND[c.service]} />
 
-  <section class="band paper" aria-labelledby="more">
-    <div class="wrap">
-      <SectionHead id="more" eyebrow="Keep looking" title="More galleries." layout="left" />
-      <CollectionCards items={others} />
-    </div>
-  </section>
+  {
+    others.length > 0 && (
+      <section class="band paper" aria-labelledby="more">
+        <div class="wrap">
+          <SectionHead id="more" eyebrow="Keep looking" title="More galleries." layout="left" />
+          <CollectionCards items={others} />
+        </div>
+      </section>
+    )
+  }
 </Base>
 
 <style>

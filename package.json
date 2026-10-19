@@ -8,8 +8,9 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node scripts/postbuild.mjs",
-    "build:preview": "BASE_PATH=/wvr-photography/ astro build && BASE_PATH=/wvr-photography/ node scripts/postbuild.mjs",
+    "build": "node scripts/sync-gallery.mjs && astro build && node scripts/postbuild.mjs",
+    "build:preview": "node scripts/sync-gallery.mjs && BASE_PATH=/wvr-photography/ astro build && BASE_PATH=/wvr-photography/ node scripts/postbuild.mjs",
+    "sync": "node scripts/sync-gallery.mjs",
     "preview": "astro preview",
     "crops": "node scripts/crops.mjs",
     "icons": "node scripts/icons.mjs"

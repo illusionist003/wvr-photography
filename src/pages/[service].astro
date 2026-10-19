@@ -14,7 +14,7 @@ import CollectionCards from '../components/CollectionCards.astro';
 import ServiceCards from '../components/ServiceCards.astro';
 import Icon from '../components/Icon.astro';
 import { SERVICES, type Service } from '../data/services';
-import { collection } from '../data/collections';
+import { COLLECTIONS } from '../data/collections';
 import { heroImage } from '../lib/hero';
 import { breadcrumbs, faqNode, serviceNode } from '../lib/schema';
 import { plain } from '../lib/rich';
@@ -28,6 +28,8 @@ const hero = await heroImage(s.hero);
 const KIND = { events: 'Event', products: 'Product', portraits: 'Portrait or headshot' } as const;
 const FOCUS: Record<string, string> = { 'portrait-cowboy-hat': '50% 20%', 'sport-ring-faceoff': '50% 40%', 'sport-boxer-corner': '50% 30%', 'engaged-embrace': '50% 25%', 'portrait-friends-stairs': '50% 30%', 'product-coffee-display': '50% 55%' };
 const tiles = s.work.map((id) => ({ id, focus: FOCUS[id] }));
+// every published gallery of this kind of work, in the order Matthew keeps them in the studio
+const galleries = COLLECTIONS.filter((c) => c.service === s.id).slice(0, 6);
 ---
 
 <Base
@@ -91,12 +93,16 @@ const tiles = s.work.map((id) => ({ id, focus: FOCUS[id] }));
 
   <ContactBand kind={KIND[s.id]} />
 
-  <section class="band paper" aria-labelledby="galleries">
-    <div class="wrap">
-      <SectionHead id="galleries" eyebrow="Galleries" title="See more like this." layout="left" />
-      <CollectionCards items={s.collections.map(collection)} />
-    </div>
-  </section>
+  {
+    galleries.length > 0 && (
+      <section class="band paper" aria-labelledby="galleries">
+        <div class="wrap">
+          <SectionHead id="galleries" eyebrow="Galleries" title="See more like this." layout="left" />
+          <CollectionCards items={galleries} />
+        </div>
+      </section>
+    )
+  }
 
   <section class="band white" aria-labelledby="also">
     <div class="wrap">

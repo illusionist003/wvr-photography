@@ -1,43 +1,90 @@
-# Builds the site and publishes it to GitHub Pages on every push to main.
+# Builds the site and publishes it to GitHub Pages.
+#
+# Runs on every push to main, by hand, and every five minutes on a schedule.
+# The scheduled run only builds when Matthew has published something new in
+# WVR Studio (https://wvr-admin.vercel.app): it compares the studio's
+# published fingerprint with gallery-version.txt on the live site. If
+# GITHUB_DISPATCH_TOKEN is set in the studio, a publish also starts this
+# workflow at once (workflow_dispatch).
 #
 # PREVIEW: served at https://nradachy-web.github.io/wvr-photography/ with
 # BASE_PATH set, so every page is noindex and robots.txt closes the site.
 # PRODUCTION (after the domain moves, see docs/LAUNCH.md): drop BASE_PATH,
-# add public/CNAME and set the custom domain in the repository's Pages settings.
+# set SITE_URL, add public/CNAME and the custom domain in Pages settings.
 name: Deploy
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
 
 permissions:
   contents: read
   pages: write
   id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  actions: write
 
 env:
   BASE_PATH: /wvr-photography/
+  SITE_URL: https://nradachy-web.github.io/wvr-photography
+  GALLERY_API: https://wvr-admin.vercel.app/api/site
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.decide.outputs.build }}
+    steps:
+      - id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # GitHub pauses schedules in a public repository after 60 quiet days; this keeps it on
+          gh api -X PUT "repos/${{ github.repository }}/actions/workflows/deploy.yml/enable" >/dev/null 2>&1 || true
+          want=$(curl -fsS --max-time 20 "$GALLERY_API?hash=1" | python3 -c 'import json,sys; print(json.load(sys.stdin)["hash"])' || echo "")
+          live=$(curl -fsS --max-time 20 "$SITE_URL/gallery-version.txt?t=$(date +%s)" | tr -d '[:space:]' || echo "")
+          busy=$(gh run list -R "${{ github.repository }}" -w deploy.yml --json status,databaseId --jq "[.[] | select(.databaseId != ${{ github.run_id }}) | select(.status == \"in_progress\" or .status == \"queued\")] | length" || echo 0)
+          echo "studio=$want live=$live other_runs=$busy"
+          if [ -n "$want" ] && [ "$want" != "$live" ] && [ "$busy" = "0" ]; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: check
+    if: needs.check.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages-build
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      # sized images from earlier builds, so only new photos are encoded
       - uses: actions/cache@v4
         with:
           path: .cache
-          key: astro-images-${{ hashFiles('src/assets/**') }}
+          key: astro-images-${{ github.run_id }}
           restore-keys: astro-images-
+      # gallery photos already downloaded from the studio
+      - uses: actions/cache@v4
+        with:
+          path: src/assets/gallery
+          key: gallery-photos-${{ github.run_id }}
+          restore-keys: gallery-photos-
       - run: npm ci
+      - run: node scripts/sync-gallery.mjs
+        env:
+          STRICT: '1'
       - run: npx astro build
       - run: node scripts/postbuild.mjs
       - uses: actions/upload-pages-artifact@v3
@@ -47,6 +94,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

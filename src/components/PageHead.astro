@@ -10,8 +10,10 @@ interface Props {
   title: string;
   lede?: string;
   crumbs?: { name: string; path: string }[];
+  /** Text typed in the studio: shown exactly as written, no markup. */
+  user?: boolean;
 }
-const { kicker, title, lede, crumbs = [] } = Astro.props;
+const { kicker, title, lede, crumbs = [], user = false } = Astro.props;
 ---
 
 <section class="ph ink">
@@ -33,9 +35,9 @@ const { kicker, title, lede, crumbs = [] } = Astro.props;
     <h1 class="ph__h">
       {kicker && <span class="eyebrow rise">{kicker}</span>}
       {kicker && <span class="sr">: </span>}
-      <span class="h1 h1--page rise d1" set:html={heading(title)} />
+      {user ? <span class="h1 h1--page rise d1">{title}</span> : <span class="h1 h1--page rise d1" set:html={heading(title)} />}
     </h1>
-    {lede && <p class="lede ph__lede rise d2" set:html={rich(lede)} />}
+    {lede && (user ? <p class="lede ph__lede rise d2">{lede}</p> : <p class="lede ph__lede rise d2" set:html={rich(lede)} />)}
     <slot />
   </div>
 </section>

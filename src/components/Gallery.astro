@@ -1,13 +1,14 @@
 ---
 /* A gallery: his photos at their own shape, large, in two columns on wider
-   screens and one on phones, each with a short caption. No lightbox: the
-   photos are already shown big. The first two load at once (they are on the
-   first screen); the rest wait until they are near. */
+   screens and one on phones, with his caption where he wrote one. No
+   lightbox: the photos are already shown big. The first two load at once
+   (they are on the first screen); the rest wait until they are near. Three
+   sizes per format keep a big album quick to build and small on disk. */
 import Photo from './Photo.astro';
-import { photo, type PhotoId } from '../data/photos';
+import type { GalleryPhoto } from '../data/collections';
 
 interface Props {
-  photos: PhotoId[];
+  photos: GalleryPhoto[];
 }
 const { photos } = Astro.props;
 const single = photos.length === 1;
@@ -15,11 +16,11 @@ const single = photos.length === 1;
 
 <ul class:list={['gl', single && 'gl--single']}>
   {
-    photos.map((id, i) => (
+    photos.map((p, i) => (
       <li>
         <figure>
-          <Photo id={id} eager={i < 2} widths={[480, 800, 1200, 1600, 2000]} sizes={single ? '(min-width: 78rem) 74rem, 100vw' : '(min-width: 78rem) 37rem, (min-width: 48rem) 48vw, 100vw'} quality={66} class="frame gl__img" />
-          <figcaption class="fine">{photo(id).caption}</figcaption>
+          <Photo src={p.src} alt={p.alt} eager={i < 2} widths={[640, 1000, 1600]} sizes={single ? '(min-width: 78rem) 74rem, 100vw' : '(min-width: 78rem) 37rem, (min-width: 48rem) 48vw, 100vw'} quality={66} class="frame gl__img" />
+          {p.caption && <figcaption class="fine">{p.caption}</figcaption>}
         </figure>
       </li>
     ))

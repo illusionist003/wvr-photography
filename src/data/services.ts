@@ -22,8 +22,6 @@ export interface Service {
   covers: { title: string; body: string }[];
   /** Selected work shown on the page, in order. */
   work: PhotoId[];
-  /** Galleries to point to. */
-  collections: string[];
   reviews: string[];
   faq: { q: string; a: string }[];
 }
@@ -52,7 +50,6 @@ export const SERVICES: Service[] = [
       { title: 'Community events', body: 'Mud bogs, car meets and the kind of day that is loud, fast and a little messy.' },
     ],
     work: ['event-mastermind-keynote', 'event-poolside-group', 'event-wine-room-greeting', 'event-coffee-popup-bar', 'sport-ring-faceoff', 'event-mud-truck-smoke'],
-    collections: ['wentworth', 'vmari', 'boxing', 'mud-bogs'],
     reviews: ['vmari', 'wentworth'],
     faq: [
       { q: 'Will you get in the way of the event?', a: 'No. I keep a low profile and work around your schedule, so your guests stay focused on the event, not the camera.' },
@@ -83,11 +80,10 @@ export const SERVICES: Service[] = [
       { title: 'Food and drink', body: 'Packaging, the bar setup and the drinks lined up and ready.' },
     ],
     work: ['product-coffee-bags', 'product-crystal-hearts', 'product-coffee-display', 'product-crystal-shop', 'place-dairy-queen', 'engaged-ring-box'],
-    collections: ['minearealm', 'vmari', 'oscota-dairy-queen', 'cars'],
     reviews: ['minarealm'],
     faq: [
       { q: 'Where does a product shoot happen?', a: 'Often right at your shop, which is how the Minarealm photos were made. We will pick the spot that shows your products best when we plan.' },
-      { q: 'Can you photograph my storefront too?', a: 'Yes. Storefront and interior photos help people recognize you from the street and know what to expect inside. See the [Dairy Queen storefront](/portfolio-collections/oscota-dairy-queen/).' },
+      { q: 'Can you photograph my storefront too?', a: 'Yes. Storefront and interior photos help people recognize you from the street and know what to expect inside. See storefronts and shops in the [portfolio](/portfolio/).' },
       { q: 'How many products can you shoot in one session?', a: 'It depends on how much setup each one needs. Send me your list and I will plan the session and quote it.' },
       { q: 'What does product photography cost?', a: 'Every shoot is quoted on what you need. Tell me about your products and where the photos will be used, and I will send a free quote.' },
     ],
@@ -114,7 +110,6 @@ export const SERVICES: Service[] = [
       { title: 'Athletes and teams', body: 'Strong, dramatic portraits for the walkout, the season or the poster.' },
     ],
     work: ['portrait-cowboy-hat', 'portrait-graduate-gazebo', 'engaged-embrace', 'portrait-brothers-bench', 'portrait-friends-stairs', 'sport-boxer-corner'],
-    collections: ['portraits', 'engagements', 'boxing'],
     reviews: ['wentworth', 'minarealm'],
     faq: [
       { q: 'I hate having my photo taken. Will this be awkward?', a: 'Most people say that before we start. I give simple direction the whole way through, so you never have to guess what to do with your hands.' },

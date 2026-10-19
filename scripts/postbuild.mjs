@@ -1,7 +1,11 @@
 /* After `astro build`:
    1. drop the full-size originals Astro copies into dist (no page links to them);
    2. check every page against the house rules and fail the build on a miss.
-   Run by `npm run build`. */
+   Run by `npm run build`.
+   Text Matthew types in WVR Studio (gallery titles, descriptions, captions,
+   sections) is his to write: it is taken out of the page before the copy rules
+   run, so a price or a date range in a caption can never block his publish.
+   Structure rules (links, image sizes, one h1, titles) still apply. */
 import { readdirSync, readFileSync, rmSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -13,6 +17,17 @@ const walk = (dir) =>
     const p = join(dir, name);
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
+
+const gallery = JSON.parse(readFileSync(new URL('../src/content/gallery.json', import.meta.url), 'utf8'));
+const USER_TEXT = [
+  ...gallery.sections.flatMap((s) => [s.title, s.intro]),
+  ...gallery.galleries.flatMap((g) => [g.title, g.kind, g.blurb, ...g.photos.flatMap((p) => [p.caption, p.alt])]),
+]
+  .filter((t) => t && t.length > 1)
+  .sort((a, b) => b.length - a.length);
+const decodeText = (s) =>
+  s.replace(/&amp;/g, '&').replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#x27;/g, "'").replace(/&nbsp;/g, ' ');
+const withoutUserText = (s) => USER_TEXT.reduce((acc, t) => acc.split(t).join(' '), s);
 
 const files = walk(DIST);
 const pages = files.filter((f) => f.endsWith('.html'));
@@ -47,13 +62,13 @@ const FORBIDDEN = [
 
 for (const [page, src] of Object.entries(html)) {
   const body = src.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' ');
-  const text = body.replace(/<[^>]+>/g, ' ');
+  const text = withoutUserText(decodeText(body.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' '));
   for (const [re, what] of FORBIDDEN) {
     const m = text.match(re);
     if (m) flag(page, `${what}: "…${text.slice(Math.max(0, m.index - 40), m.index + 40).replace(/\s+/g, ' ')}…"`);
   }
   // the phone number is always something a thumb can tap
-  const unlinked = body.replace(/<a\b[\s\S]*?<\/a>/g, ' ').replace(/<[^>]+>/g, ' ');
+  const unlinked = withoutUserText(decodeText(body.replace(/<a\b[\s\S]*?<\/a>/g, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' '));
   if (/\(248\) 759-1578/.test(unlinked)) flag(page, 'the phone number appears as plain text, not a link');
   const h1 = body.match(/<h1[\s>]/g) || [];
   if (h1.length !== 1) flag(page, `${h1.length} h1 elements`);

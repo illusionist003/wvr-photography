@@ -25,8 +25,8 @@ const list: Review[] = ids ? ids.map((id) => REVIEWS.find((r) => r.id === id)!).
           <figcaption>
             <span class="rv__name">{r.name}</span>
             <span class="rv__biz muted">{r.business}</span>
-            {r.collection && (
-              <a class="arrow rv__link" href={href(collectionPath(collection(r.collection)))}>
+            {r.collection && collection(r.collection) && (
+              <a class="arrow rv__link" href={href(collectionPath(collection(r.collection)!))}>
                 <span>See the photos</span>
                 <Icon name="arrow" />
               </a>

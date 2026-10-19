@@ -6,7 +6,7 @@
 import Icon from './Icon.astro';
 import Photo from './Photo.astro';
 import { photo, type PhotoId } from '../data/photos';
-import { COLLECTIONS, collectionPath } from '../data/collections';
+import { galleryOf, collectionPath } from '../data/collections';
 import { href } from '../lib/paths';
 
 interface Props {
@@ -14,7 +14,8 @@ interface Props {
 }
 const { tiles } = Astro.props;
 
-const home = (id: PhotoId) => COLLECTIONS.find((c) => c.photos.includes(id));
+// a photo links to the gallery it lives in, if Matthew still has it published
+const home = (id: PhotoId) => galleryOf(id);
 ---
 
 <ul class="wm">

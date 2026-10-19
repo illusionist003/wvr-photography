@@ -1,0 +1,410 @@
+{
+ "hash": "54461df6f6c41c04",
+ "version": 1,
+ "sections": [
+  {
+   "id": "business",
+   "title": "Businesses and events",
+   "intro": "Teams, launches, and shops and the products they sell."
+  },
+  {
+   "id": "action",
+   "title": "Sports and action",
+   "intro": "Fight nights, mud bogs and cars. Fast, loud and in low light."
+  },
+  {
+   "id": "people",
+   "title": "People and places",
+   "intro": "Portraits, couples and the storefronts people drive past every day."
+  }
+ ],
+ "galleries": [
+  {
+   "slug": "wentworth",
+   "title": "Wentworth Real Estate",
+   "kind": "Events and team photos",
+   "section": "business",
+   "service": "events",
+   "blurb": "Mastermind days, a gala night and the group photos in between, from a dinner in a wine room to a team lined up along a pool at sunset.",
+   "cover": "event-poolside-group",
+   "photos": [
+    {
+     "key": "event-poolside-group",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/event-poolside-group.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "A large group in matching black shirts poses on a pool deck at sunset, mirrored in the water",
+     "caption": "Group photo at golden hour"
+    },
+    {
+     "key": "event-wine-room-greeting",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/event-wine-room-greeting.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Guests greet each other with hugs and handshakes in a room lined with wine racks",
+     "caption": "Arrivals at a mastermind dinner"
+    },
+    {
+     "key": "event-gala-stage",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/event-gala-stage.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Guests in evening wear stand together on a stage under chandeliers and blue drapes",
+     "caption": "Gala night on stage"
+    },
+    {
+     "key": "event-living-room-group",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/event-living-room-group.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "A group of about thirty people posed together in a bright living room",
+     "caption": "Team photo, indoors"
+    },
+    {
+     "key": "event-mastermind-dinner",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/event-mastermind-dinner.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Men in black shirts stand with heads bowed beneath a Winners Circle Mastermind sign",
+     "caption": "Winners Circle Mastermind"
+    },
+    {
+     "key": "event-pool-group-dusk",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/event-pool-group-dusk.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "A group stands along the edge of a backyard pool at dusk",
+     "caption": "Poolside group at dusk"
+    },
+    {
+     "key": "event-restaurant-group",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/event-restaurant-group.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "A large group poses between dining tables in a restaurant private room",
+     "caption": "Dinner group photo"
+    }
+   ]
+  },
+  {
+   "slug": "vmari",
+   "title": "Vmari Coffee",
+   "kind": "Pop-up event and product",
+   "section": "business",
+   "service": "products",
+   "blurb": "A coffee pop-up: the bags, the table display and the drinks lined up on the bar.",
+   "cover": "product-coffee-bags",
+   "photos": [
+    {
+     "key": "product-coffee-bags",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/product-coffee-bags.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Three gradient coffee bags in pink, gold and orange standing on a dark wooden bench",
+     "caption": "Coffee packaging"
+    },
+    {
+     "key": "product-coffee-display",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/product-coffee-display.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "Coffee bags, cups and a framed logo arranged on a wooden table display",
+     "caption": "Pop-up display"
+    },
+    {
+     "key": "event-coffee-popup-bar",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/event-coffee-popup-bar.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Iced coffee drinks lined up on a wooden bar at a coffee pop-up",
+     "caption": "Drinks at a coffee pop-up"
+    }
+   ]
+  },
+  {
+   "slug": "minearealm",
+   "title": "Minarealm",
+   "kind": "Product and storefront",
+   "section": "business",
+   "service": "products",
+   "blurb": "A crystal shop in Fenton Township. The stones up close, where the color and shine have to come through, and the shop floor.",
+   "cover": "product-crystal-palm-stones",
+   "photos": [
+    {
+     "key": "product-crystal-palm-stones",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/product-crystal-palm-stones.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "A colorful pile of polished palm stones in greens, pinks and golds",
+     "caption": "Polished palm stones"
+    },
+    {
+     "key": "product-crystal-hearts",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/product-crystal-hearts.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Two polished stone hearts, one green and one smoky brown, on a wooden tray",
+     "caption": "Stone hearts, up close"
+    },
+    {
+     "key": "product-crystal-shop",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/product-crystal-shop.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Shelves of crystals, books and gifts inside a small crystal shop",
+     "caption": "The shop floor"
+    }
+   ]
+  },
+  {
+   "slug": "oscota-dairy-queen",
+   "title": "Dairy Queen",
+   "kind": "Storefront",
+   "section": "people",
+   "service": "products",
+   "blurb": "A classic stone walk-up, shot straight on so the building, the sign and the street all read clearly.",
+   "cover": "place-dairy-queen",
+   "photos": [
+    {
+     "key": "place-dairy-queen",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/place-dairy-queen.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "A small stone Dairy Queen walk-up with its red sign on a clear winter day",
+     "caption": "Dairy Queen storefront"
+    }
+   ]
+  },
+  {
+   "slug": "boxing",
+   "title": "Boxing",
+   "kind": "Sports",
+   "section": "action",
+   "service": "events",
+   "blurb": "Fight night under the lights, from the walkout to the corner, plus sparring days in the gym.",
+   "cover": "sport-ring-faceoff",
+   "photos": [
+    {
+     "key": "sport-ring-faceoff",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/sport-ring-faceoff.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "Two boxers square off in an outdoor ring at night, seen from ring level",
+     "caption": "Fight night"
+    },
+    {
+     "key": "sport-boxer-corner",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/sport-boxer-corner.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "A boxer in red gloves leans on the ropes in his corner, a crowd behind him",
+     "caption": "In the corner"
+    },
+    {
+     "key": "sport-boxer-walkout",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/sport-boxer-walkout.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "A boxer in a red bandana stands in the ring with his team under the lights",
+     "caption": "Walkout"
+    },
+    {
+     "key": "sport-ring-exchange",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/sport-ring-exchange.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "Two boxers exchange punches in the ring under a dark sky",
+     "caption": "The exchange"
+    },
+    {
+     "key": "sport-gym-sparring",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/sport-gym-sparring.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Two fighters in headgear spar in a gym ring with a red wall behind them",
+     "caption": "Sparring day"
+    },
+    {
+     "key": "sport-gym-clinch",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/sport-gym-clinch.jpg",
+     "w": 1424,
+     "h": 2400,
+     "alt": "Two fighters in headgear clinch in a dim boxing gym",
+     "caption": "Inside the gym"
+    },
+    {
+     "key": "sport-sprinter",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/sport-sprinter.jpg",
+     "w": 1787,
+     "h": 2400,
+     "alt": "A runner in a red and blue Motown jersey mid-stride on a tree-lined street",
+     "caption": "Mid-stride"
+    }
+   ]
+  },
+  {
+   "slug": "mud-bogs",
+   "title": "Mud bogs",
+   "kind": "Motorsport",
+   "section": "action",
+   "service": "events",
+   "blurb": "Trucks in the pit, smoke in the air and a monster truck clearing the jump.",
+   "cover": "event-mud-truck-smoke",
+   "photos": [
+    {
+     "key": "event-mud-truck-smoke",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/event-mud-truck-smoke.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "A mud-covered pickup on huge tires churns through a mud pit, black smoke pouring from its stack",
+     "caption": "Mud bog, full throttle"
+    },
+    {
+     "key": "event-monster-truck-jump",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/event-monster-truck-jump.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "A purple monster truck in mid-air over a dirt jump as a safety worker watches",
+     "caption": "Airborne at the mud bog"
+    }
+   ]
+  },
+  {
+   "slug": "cars",
+   "title": "Cars",
+   "kind": "Automotive",
+   "section": "action",
+   "service": "products",
+   "blurb": "A Supra in the sun and a Camaro after dark.",
+   "cover": "auto-camaro-night",
+   "photos": [
+    {
+     "key": "auto-camaro-night",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/auto-camaro-night.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "An orange Chevrolet Camaro at night with glowing blue headlight rings",
+     "caption": "Camaro after dark"
+    },
+    {
+     "key": "auto-supra",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/auto-supra.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "A white Toyota Supra parked at a curb under a blue summer sky",
+     "caption": "Toyota Supra"
+    }
+   ]
+  },
+  {
+   "slug": "portraits",
+   "title": "Portraits",
+   "kind": "Portraits",
+   "section": "people",
+   "service": "portraits",
+   "blurb": "Seniors, couples, brothers, friends and personal portraits, mostly outdoors in natural light.",
+   "cover": "portrait-couple-lake",
+   "photos": [
+    {
+     "key": "portrait-couple-lake",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/portrait-couple-lake.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "A young man in a dark suit holds a young woman in a sequined dress in front of a lake",
+     "caption": "Couple portrait by the water"
+    },
+    {
+     "key": "portrait-cowboy-hat",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/portrait-cowboy-hat.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "A bearded man in a black cowboy hat and leather jacket looks off to the side among bare trees",
+     "caption": "Personal portrait"
+    },
+    {
+     "key": "portrait-graduate-gazebo",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/portrait-graduate-gazebo.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "A graduate in cap, gown and stoles stands in the center of a wooden gazebo",
+     "caption": "Graduation portrait"
+    },
+    {
+     "key": "portrait-brothers-bench",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/portrait-brothers-bench.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Three young brothers lean on each other and laugh on a park bench",
+     "caption": "Family portrait"
+    },
+    {
+     "key": "portrait-friends-stairs",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/portrait-friends-stairs.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "Four friends walk down a white wooden staircase under a bright blue sky",
+     "caption": "Friends portrait"
+    },
+    {
+     "key": "portrait-friends-lights",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/portrait-friends-lights.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Two friends squeeze together and pull faces in front of colorful string lights",
+     "caption": "Just for fun"
+    },
+    {
+     "key": "portrait-fire-spin",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/portrait-fire-spin.jpg",
+     "w": 2400,
+     "h": 1600,
+     "alt": "Sparks swirl from a burning wire spun at night, the spinner barely visible in the dark",
+     "caption": "Sparks at night"
+    }
+   ]
+  },
+  {
+   "slug": "engagements",
+   "title": "Engagements",
+   "kind": "Couples",
+   "section": "people",
+   "service": "portraits",
+   "blurb": "Close, quiet moments for a newly engaged couple, and the ring that started it.",
+   "cover": "engaged-embrace",
+   "photos": [
+    {
+     "key": "engaged-embrace",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/engaged-embrace.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "A couple embraces by a window, her eyes closed and his lips on her forehead",
+     "caption": "Engagement session"
+    },
+    {
+     "key": "engaged-dock",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/engaged-dock.jpg",
+     "w": 901,
+     "h": 1352,
+     "alt": "A couple leans on a wooden dock railing, arms around each other, looking over a pond",
+     "caption": "On the dock"
+    },
+    {
+     "key": "engaged-ring-box",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/engaged-ring-box.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "A diamond engagement ring in an open wooden ring box",
+     "caption": "The ring"
+    },
+    {
+     "key": "engaged-ring-hand",
+     "url": "https://qwtkyfdljcc15592.public.blob.vercel-storage.com/photos/engaged-ring-hand.jpg",
+     "w": 1600,
+     "h": 2400,
+     "alt": "A hand wearing a diamond engagement ring against a dark background",
+     "caption": "Ring detail"
+    }
+   ]
+  }
+ ]
+}
