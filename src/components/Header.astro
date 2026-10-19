@@ -1,12 +1,18 @@
 ---
-/* Sticky header: his badge and name, the three kinds of work, the portfolio,
-   the phone number and one action. Below 72rem the links fold into a full
-   screen menu built on the native popover, so it opens, closes and handles
-   Escape without script. */
+/* Sticky header: his badge and name, Galleries, the three kinds of work, the
+   phone number and one action. Below 72rem the links fold into a full screen
+   menu built on the native popover, so it opens, closes and handles Escape
+   without script.
+
+   Galleries is three layers deep, the same as WVR Studio: Galleries, then
+   each album, then the galleries inside it. On a desktop the panel opens on
+   hover or with the arrow button (keyboard and touch); in the phone menu each
+   album is a native disclosure, so it works without script. */
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
 import { BRAND, QUOTE_CTA, SOCIAL } from '../data/site';
 import { SERVICES } from '../data/services';
+import { ALBUMS, albumPath, collectionPath } from '../data/collections';
 import { href } from '../lib/paths';
 
 interface Props {
@@ -15,9 +21,10 @@ interface Props {
 }
 const { quoteHref, current } = Astro.props;
 
-const links = [{ label: 'Portfolio', path: '/portfolio/' }, ...SERVICES.map((s) => ({ label: s.nav, path: s.path })), { label: 'About', path: '/about/' }];
+const links = [...SERVICES.map((s) => ({ label: s.nav, path: s.path })), { label: 'About', path: '/about/' }];
 const quote = quoteHref.startsWith('#') ? quoteHref : href(quoteHref);
-const isCurrent = (p: string) => current === p || (p === '/portfolio/' && current.startsWith('/portfolio-collections/'));
+const isCurrent = (p: string) => current === p;
+const inGalleries = current.startsWith('/portfolio') || current.startsWith('/portfolio-collections/');
 ---
 
 <header class="hdr ink">
@@ -28,6 +35,42 @@ const isCurrent = (p: string) => current === p || (p === '/portfolio/' && curren
 
     <nav class="hdr__nav" aria-label="Main">
       <ul>
+        <li class="dd" data-dd>
+          <a href={href('/portfolio/')} aria-current={inGalleries ? 'page' : undefined}>
+            Galleries
+          </a>
+          <button class="dd__btn" type="button" aria-expanded="false" aria-controls="dd-galleries" aria-label="Show albums and galleries">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+          <div class="dd__panel ink" id="dd-galleries">
+            <div class="wrap dd__inner">
+              <div class="dd__grid">
+                {
+                  ALBUMS.map((a) => (
+                    <div class="dd__col">
+                      <a class="dd__album" href={href(albumPath(a))}>
+                        {a.title}
+                      </a>
+                      <ul>
+                        {a.galleries.map((g) => (
+                          <li>
+                            <a href={href(collectionPath(g))} aria-current={current === collectionPath(g) ? 'page' : undefined}>
+                              {g.title}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))
+                }
+              </div>
+              <a class="arrow dd__all" href={href('/portfolio/')}>
+                <span>All albums</span>
+                <Icon name="arrow" />
+              </a>
+            </div>
+          </div>
+        </li>
         {
           links.map((l) => (
             <li>
@@ -65,6 +108,33 @@ const isCurrent = (p: string) => current === p || (p === '/portfolio/' && curren
   <nav class="menu__nav" aria-label="Menu">
     <ul>
       <li><a href={href('/')}>Home</a></li>
+      <li class="menu__gal">
+        <a href={href('/portfolio/')}>Galleries</a>
+        <ul class="menu__albums">
+          {
+            ALBUMS.map((a) => (
+              <li>
+                <details>
+                  <summary>
+                    <span>{a.title}</span>
+                    <span class="menu__n">{a.galleries.length}</span>
+                  </summary>
+                  <ul>
+                    <li>
+                      <a href={href(albumPath(a))}>The whole album</a>
+                    </li>
+                    {a.galleries.map((g) => (
+                      <li>
+                        <a href={href(collectionPath(g))}>{g.title}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              </li>
+            ))
+          }
+        </ul>
+      </li>
       {links.map((l) => <li><a href={href(l.path)}>{l.label}</a></li>)}
       <li><a href={href('/contact/')}>Contact</a></li>
     </ul>
@@ -79,6 +149,35 @@ const isCurrent = (p: string) => current === p || (p === '/portfolio/' && curren
     <a href={SOCIAL.facebook} target="_blank" rel="noopener"><Icon name="facebook" />Facebook</a>
   </p>
 </div>
+
+<script is:inline>
+  /* The Galleries panel: the arrow button opens and closes it (keyboard and
+     touch); Escape or a click elsewhere closes it. Hover is handled in CSS. */
+  (function () {
+    var dd = document.querySelector('[data-dd]');
+    if (!dd) return;
+    var btn = dd.querySelector('.dd__btn');
+    function set(open) {
+      dd.classList.toggle('is-open', open);
+      btn.setAttribute('aria-expanded', String(open));
+    }
+    btn.addEventListener('click', function () {
+      set(!dd.classList.contains('is-open'));
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && dd.classList.contains('is-open')) {
+        set(false);
+        btn.focus();
+      }
+    });
+    document.addEventListener('click', function (e) {
+      if (!dd.contains(e.target)) set(false);
+    });
+    dd.addEventListener('focusout', function (e) {
+      if (!dd.contains(e.relatedTarget)) set(false);
+    });
+  })();
+</script>
 
 <script is:inline>
   /* While the menu is open, the page behind it cannot be reached by keyboard or
@@ -127,12 +226,115 @@ const isCurrent = (p: string) => current === p || (p === '/portfolio/' && curren
 
   .hdr__nav {
     display: none;
+    align-self: stretch;
     margin-inline: auto;
   }
 
-  .hdr__nav ul {
+  .hdr__nav > ul {
     display: flex;
     gap: 0.25rem;
+    height: 100%;
+  }
+
+  .hdr__nav > ul > li {
+    display: flex;
+    align-items: center;
+  }
+
+  /* ----- Galleries: three layers ----- */
+
+  .dd__btn {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2.75rem;
+    margin-left: -0.55rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--on-ink-muted);
+    cursor: pointer;
+  }
+
+  .dd__btn svg {
+    transition: rotate 0.2s var(--ease);
+  }
+
+  .dd.is-open .dd__btn svg {
+    rotate: 180deg;
+  }
+
+  .dd__panel {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    border-top: 1px solid var(--line-ink);
+    border-bottom: 1px solid var(--line-ink);
+    box-shadow: 0 24px 40px rgb(0 0 0 / 0.35);
+  }
+
+  .dd.is-open .dd__panel {
+    display: block;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .dd:hover .dd__panel {
+      display: block;
+    }
+
+    .dd:hover .dd__btn svg {
+      rotate: 180deg;
+    }
+  }
+
+  .dd__inner {
+    display: grid;
+    gap: 1.25rem;
+    padding-block: 1.75rem 1.5rem;
+  }
+
+  .dd__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: 1.5rem 2rem;
+  }
+
+  .hdr__nav .dd__album {
+    white-space: normal;
+    padding: 0 0 0.5rem;
+    margin-bottom: 0.35rem;
+    border-bottom: 1px solid var(--line-ink);
+    font-size: 1.0625rem;
+    font-weight: 680;
+    letter-spacing: -0.01em;
+  }
+
+  .hdr__nav .dd__album::after,
+  .hdr__nav .dd__col li a::after,
+  .hdr__nav .dd__all::after {
+    display: none;
+  }
+
+  .hdr__nav .dd__col li a {
+    padding: 0.4rem 0;
+    font-weight: 450;
+    white-space: normal;
+    color: var(--on-ink-muted);
+  }
+
+  .hdr__nav .dd__col li a:hover,
+  .hdr__nav .dd__col li a[aria-current='page'] {
+    color: var(--on-ink);
+  }
+
+  .hdr__nav .dd__all {
+    display: inline-flex;
+    justify-self: start;
+    padding: 0;
+    font-size: 0.9375rem;
+    color: var(--teal-soft);
   }
 
   .hdr__nav a {
@@ -319,6 +521,64 @@ const isCurrent = (p: string) => current === p || (p === '/portfolio/' && curren
 
   .menu__nav a:hover {
     color: var(--teal-soft);
+  }
+
+  .menu__albums {
+    margin: 0.1rem 0 0.4rem;
+    padding-left: 0.9rem;
+    border-left: 1px solid var(--line-ink);
+  }
+
+  .menu__albums summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 2.75rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .menu__albums summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .menu__albums summary::after {
+    content: '';
+    width: 0.55rem;
+    height: 0.55rem;
+    margin-right: 0.3rem;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    rotate: 45deg;
+    translate: 0 -0.15rem;
+    transition: rotate 0.2s var(--ease);
+  }
+
+  .menu__albums details[open] summary::after {
+    rotate: 225deg;
+    translate: 0 0.1rem;
+  }
+
+  .menu__n {
+    margin-left: auto;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--on-ink-muted);
+  }
+
+  .menu__albums details ul {
+    padding: 0 0 0.5rem 0.9rem;
+  }
+
+  .menu__nav .menu__albums details a {
+    padding: 0.45rem 0;
+    font-size: 1rem;
+    font-weight: 450;
+    letter-spacing: 0;
+    color: var(--on-ink-muted);
   }
 
   .menu__actions {

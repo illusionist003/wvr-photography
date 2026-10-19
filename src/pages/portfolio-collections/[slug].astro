@@ -1,7 +1,7 @@
 ---
-/* One gallery, at the address his Wix site used
-   (/portfolio-collections/<slug>). Built from what Matthew publishes in WVR
-   Studio. The photos come straight after a short heading; then the review
+/* Layer three: one gallery and its photos, at the address his Wix site used
+   (/portfolio-collections/<slug>), inside its album. Built from what Matthew
+   publishes in WVR Studio. The photos come straight after a short heading; then the review
    from that client, if there is one, the way to book the same kind of shoot,
    and the neighbouring galleries. Title and description are built so they
    always fit search limits, whatever he types. */
@@ -13,7 +13,7 @@ import SectionHead from '../../components/SectionHead.astro';
 import CollectionCards from '../../components/CollectionCards.astro';
 import ContactBand from '../../components/ContactBand.astro';
 import Icon from '../../components/Icon.astro';
-import { COLLECTIONS, collectionPath, type Collection } from '../../data/collections';
+import { albumOf, albumPath, COLLECTIONS, collectionPath, type Collection } from '../../data/collections';
 import { REVIEWS } from '../../data/reviews';
 import { service } from '../../data/services';
 import { href } from '../../lib/paths';
@@ -25,9 +25,16 @@ export function getStaticPaths() {
 
 const { c } = Astro.props as { c: Collection };
 const s = service(c.service);
-const at = COLLECTIONS.indexOf(c);
-const others = COLLECTIONS.length > 1 ? [1, 2, 3].map((k) => COLLECTIONS[(at + k) % COLLECTIONS.length]).filter((o, i, a) => o !== c && a.indexOf(o) === i) : [];
+const album = albumOf(c);
+// next in the same album first, then the rest of the portfolio
+const sameAlbum = album.galleries.filter((g) => g !== c);
+const others = [...sameAlbum, ...COLLECTIONS.filter((g) => g.album !== c.album)].slice(0, 3);
 const path = collectionPath(c);
+const crumbs = [
+  { name: 'Galleries', path: '/portfolio/' },
+  { name: album.title, path: albumPath(album) },
+  { name: c.title, path },
+];
 const KIND = { events: 'Event', products: 'Product', portraits: 'Portrait or headshot' } as const;
 const review = REVIEWS.find((r) => r.collection === c.slug);
 
@@ -47,14 +54,14 @@ const lead = c.blurb ? `${c.blurb.replace(/[.!?]?$/, '.')} ${tail}` : `${c.title
 const description = clamp(lead.length >= 70 ? lead : `${lead} See the gallery and get a free quote.`, 160);
 ---
 
-<Base title={title} description={description} path={path} schema={[breadcrumbs([{ name: 'Portfolio', path: '/portfolio/' }, { name: c.title, path }])]}>
-  <PageHead user kicker={c.kind} title={c.title} lede={c.blurb || undefined} crumbs={[{ name: 'Portfolio', path: '/portfolio/' }, { name: c.title, path }]} />
+<Base title={title} description={description} path={path} schema={[breadcrumbs(crumbs)]}>
+  <PageHead user kicker={c.kind} title={c.title} lede={c.blurb || undefined} crumbs={crumbs} />
 
   <section class="band--tight ink gal" aria-label={`${c.title} photos`}>
     <div class="wrap">
       <Gallery photos={c.photos} />
       <div class="gal__end">
-        <a class="arrow" href={href('/portfolio/')}><Icon name="back" /><span>All galleries</span></a>
+        <a class="arrow" href={href(albumPath(album))}><Icon name="back" /><span>More in {album.title}</span></a>
         <a class="btn primary" href="#quote">Book a shoot like this<Icon name="arrow" class="arr" /></a>
       </div>
     </div>
@@ -77,7 +84,7 @@ const description = clamp(lead.length >= 70 ? lead : `${lead} See the gallery an
     others.length > 0 && (
       <section class="band paper" aria-labelledby="more">
         <div class="wrap">
-          <SectionHead id="more" eyebrow="Keep looking" title="More galleries." layout="left" />
+          <SectionHead id="more" eyebrow="Keep looking" title={sameAlbum.length ? `More in ${album.title}.` : 'More galleries.'} layout="left" />
           <CollectionCards items={others} />
         </div>
       </section>

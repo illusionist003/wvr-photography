@@ -1,10 +1,10 @@
-/* The studio's content: sections (groups on the portfolio page) and galleries
-   with their photos. One JSON file in the Blob store, written with an ETag
+/* The studio's content, three layers deep: albums hold galleries, galleries
+   hold photos. One JSON file in the Blob store, written with an ETag
    check so two devices can never silently overwrite each other, plus a copy
    of every saved version under content/history/ for recovery.
 
    The public site only ever sees the published projection (published()):
-   visible galleries with at least one photo, and the sections they sit in. */
+   visible galleries with at least one photo, and the albums they sit in. */
 import { createHash } from 'node:crypto';
 import { BlobNotFoundError, BlobPreconditionFailedError, del, head, list, put } from '@vercel/blob';
 
@@ -25,7 +25,8 @@ export interface Gallery {
   slug: string;
   title: string;
   kind: string;
-  section: string;
+  /** The album this gallery sits in. */
+  album: string;
   service: Service;
   blurb: string;
   visible: boolean;
@@ -35,17 +36,20 @@ export interface Gallery {
   updatedAt: string;
 }
 
-export interface Section {
-  id: string;
+/** The top layer: an album holds galleries, a gallery holds photos. */
+export interface Album {
+  slug: string;
   title: string;
   intro: string;
+  /** A photo key from one of its galleries; empty means the first gallery's cover. */
+  cover: string;
 }
 
 export interface Content {
-  schema: 1;
+  schema: 2;
   version: number;
   updatedAt: string;
-  sections: Section[];
+  albums: Album[];
   galleries: Gallery[];
 }
 
@@ -72,7 +76,7 @@ export async function readContent(): Promise<{ content: Content | null; etag: st
     const res = await fetch(`${meta.url}?v=${encodeURIComponent(bust)}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`content read failed: ${res.status}`);
     const text = await res.text();
-    if (strip(res.headers.get('etag')) === etag || attempt === 2) return { content: JSON.parse(text) as Content, etag };
+    if (strip(res.headers.get('etag')) === etag || attempt === 2) return { content: upgrade(JSON.parse(text)), etag };
   }
   throw new Error('unreachable');
 }
@@ -129,20 +133,51 @@ function photoUrl(v: unknown): string {
   return u.toString();
 }
 
+export function slugify(text: string) {
+  return (
+    text
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/&/g, ' and ')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 50) || 'album'
+  );
+}
+
+/** Version 1 had flat "sections"; they become the first albums, nothing else changes. */
+export function upgrade(raw: unknown): Content {
+  const doc = raw as Record<string, unknown> & { schema?: number };
+  if (doc.schema === 2) return doc as unknown as Content;
+  const sections = (doc.sections as { id: string; title: string; intro: string }[]) ?? [];
+  const map = new Map<string, string>();
+  const taken = new Set<string>();
+  const albums: Album[] = sections.map((sec) => {
+    let slug = slugify(sec.title);
+    for (let n = 2; taken.has(slug); n++) slug = `${slugify(sec.title)}-${n}`;
+    taken.add(slug);
+    map.set(sec.id, slug);
+    return { slug, title: sec.title, intro: sec.intro ?? '', cover: '' };
+  });
+  const galleries = ((doc.galleries as (Gallery & { section?: string })[]) ?? []).map(({ section, ...g }) => ({ ...g, album: map.get(section ?? '') ?? albums[0]?.slug ?? '' }));
+  return { schema: 2, version: Number(doc.version) || 0, updatedAt: String(doc.updatedAt ?? ''), albums, galleries };
+}
+
 /** Clean an incoming document from the editor. Throws on anything structural. */
 export function clean(input: unknown): Omit<Content, 'version' | 'updatedAt'> {
   const doc = input as Partial<Content>;
-  if (!doc || !Array.isArray(doc.sections) || !Array.isArray(doc.galleries)) throw new Error('bad document');
-  if (doc.sections.length > 20 || doc.galleries.length > 300) throw new Error('too many items');
+  if (!doc || !Array.isArray(doc.albums) || !Array.isArray(doc.galleries)) throw new Error('bad document');
+  if (doc.albums.length > 60 || doc.galleries.length > 400) throw new Error('too many items');
 
-  const sections: Section[] = doc.sections.map((s) => {
-    const id = str(s?.id, 40);
-    if (!SLUG.test(id)) throw new Error(`bad section id ${id}`);
-    return { id, title: str(s.title, 60) || 'Untitled section', intro: str(s.intro, 220) };
+  const albumSlugs = new Set<string>();
+  const rawAlbums = doc.albums.map((a) => {
+    const slug = str(a?.slug, 60);
+    if (!SLUG.test(slug) || albumSlugs.has(slug)) throw new Error(`bad or duplicate album address ${slug}`);
+    albumSlugs.add(slug);
+    return { slug, title: str(a.title, 60) || 'Untitled album', intro: str(a.intro, 300), cover: str(a.cover, 60) };
   });
-  const sectionIds = new Set(sections.map((s) => s.id));
-  if (sectionIds.size !== sections.length) throw new Error('duplicate section');
-  if (!sections.length) throw new Error('at least one section');
+  if (!rawAlbums.length) throw new Error('at least one album');
 
   const slugs = new Set<string>();
   const galleries: Gallery[] = doc.galleries.map((g) => {
@@ -160,7 +195,7 @@ export function clean(input: unknown): Omit<Content, 'version' | 'updatedAt'> {
       if (!(w > 0 && h > 0 && w <= 10000 && h <= 10000)) throw new Error(`bad size for ${key}`);
       return { key, url: photoUrl(p.url), thumb: photoUrl(p.thumb), w, h, alt: str(p.alt, 250), caption: str(p.caption, 200) };
     });
-    const section = sectionIds.has(g.section as string) ? (g.section as string) : sections[0].id;
+    const album = albumSlugs.has(g.album as string) ? (g.album as string) : rawAlbums[0].slug;
     const service = SERVICES.includes(g.service as Service) ? (g.service as Service) : 'events';
     const cover = keys.has(g.cover as string) ? (g.cover as string) : photos[0]?.key ?? '';
     const now = new Date().toISOString();
@@ -168,7 +203,7 @@ export function clean(input: unknown): Omit<Content, 'version' | 'updatedAt'> {
       slug,
       title: str(g.title, 80) || 'Untitled gallery',
       kind: str(g.kind, 60),
-      section,
+      album,
       service,
       blurb: str(g.blurb, 400),
       visible: g.visible === true,
@@ -178,26 +213,38 @@ export function clean(input: unknown): Omit<Content, 'version' | 'updatedAt'> {
       updatedAt: typeof g.updatedAt === 'string' ? g.updatedAt : now,
     };
   });
-  return { schema: 1, sections, galleries };
+
+  // an album cover must be a photo that is in one of its galleries
+  const albums: Album[] = rawAlbums.map((a) => {
+    const inAlbum = galleries.filter((g) => g.album === a.slug).some((g) => g.photos.some((p) => p.key === a.cover));
+    return { ...a, cover: inAlbum ? a.cover : '' };
+  });
+  return { schema: 2, albums, galleries };
 }
 
 /** What the public site is built from. */
 export function published(c: Content) {
   const galleries = c.galleries
     .filter((g) => g.visible && g.photos.length > 0)
-    .map(({ slug, title, kind, section, service, blurb, cover, photos }) => ({
+    .map(({ slug, title, kind, album, service, blurb, cover, photos }) => ({
       slug,
       title,
       kind,
-      section,
+      album,
       service,
       blurb,
       cover,
       photos: photos.map(({ key, url, w, h, alt, caption }) => ({ key, url, w, h, alt, caption })),
     }));
-  const used = new Set(galleries.map((g) => g.section));
-  const sections = c.sections.filter((s) => used.has(s.id));
-  const body = { sections, galleries };
+  const albums = c.albums
+    .map((a) => {
+      const inside = galleries.filter((g) => g.album === a.slug);
+      if (!inside.length) return null;
+      const cover = inside.some((g) => g.photos.some((p) => p.key === a.cover)) ? a.cover : inside[0].cover;
+      return { slug: a.slug, title: a.title, intro: a.intro, cover };
+    })
+    .filter((a): a is Album => a !== null);
+  const body = { albums, galleries };
   const hash = createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 16);
   return { hash, version: c.version, ...body };
 }

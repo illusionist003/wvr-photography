@@ -1,0 +1,67 @@
+---
+/* Layer two: one album and the galleries inside it. Built from what Matthew
+   publishes in WVR Studio; the title and description always fit search
+   limits, whatever he types. */
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import CollectionCards from '../../components/CollectionCards.astro';
+import AlbumCards from '../../components/AlbumCards.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import ContactBand from '../../components/ContactBand.astro';
+import { ALBUMS, albumPath, type Album } from '../../data/collections';
+import { breadcrumbs } from '../../lib/schema';
+
+export function getStaticPaths() {
+  return ALBUMS.map((a) => ({ params: { album: a.slug }, props: { a } }));
+}
+
+const { a } = Astro.props as { a: Album };
+const path = albumPath(a);
+const others = ALBUMS.filter((x) => x !== a);
+
+function clamp(text: string, max: number) {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  return `${cut.slice(0, cut.lastIndexOf(' ') > 40 ? cut.lastIndexOf(' ') : cut.length).replace(/[\s,.;:]+$/, '')}…`;
+}
+
+const brand = ' | WVR Photography';
+const t = `${a.title} Photo Album${brand}`;
+const title = t.length < 25 ? `${a.title} Photo Album${brand}, Fenton MI` : t.length <= 70 ? t : `${clamp(a.title, 70 - brand.length)}${brand}`;
+const count = `${a.galleries.length} ${a.galleries.length === 1 ? 'gallery' : 'galleries'} and ${a.photoCount} photos`;
+const lead = a.intro ? `${a.intro.replace(/[.!?]?$/, '.')} ${count} by Matthew Weaver of WVR Photography, Fenton, MI.` : `${a.title}: ${count} by Matthew Weaver of WVR Photography, an event, product and portrait photographer in Fenton, MI.`;
+const description = clamp(lead.length >= 70 ? lead : `${lead} Open a gallery to see the photos.`, 160);
+---
+
+<Base title={title} description={description} path={path} schema={[breadcrumbs([{ name: 'Galleries', path: '/portfolio/' }, { name: a.title, path }])]}>
+  <PageHead user kicker="Album" title={a.title} lede={a.intro || undefined} crumbs={[{ name: 'Galleries', path: '/portfolio/' }, { name: a.title, path }]} />
+
+  <section class="band--tight paper inside" aria-label={`Galleries in ${a.title}`}>
+    <div class="wrap">
+      <p class="count muted">
+        {a.galleries.length} {a.galleries.length === 1 ? 'gallery' : 'galleries'}, {a.photoCount} photos
+      </p>
+      <CollectionCards items={a.galleries} eagerFirst />
+    </div>
+  </section>
+
+  <ContactBand title="Planning a shoot like these? Let's **talk.**" />
+
+  {
+    others.length > 0 && (
+      <section class="band ink" aria-labelledby="more">
+        <div class="wrap">
+          <SectionHead id="more" eyebrow="Keep looking" title="Other albums." layout="left" />
+          <AlbumCards items={others} />
+        </div>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  .count {
+    margin-bottom: 1.5rem;
+    font-size: 0.9375rem;
+  }
+</style>

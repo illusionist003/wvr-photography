@@ -25,7 +25,7 @@ try {
   const r = await fetch(API, { headers: { 'cache-control': 'no-cache' } });
   if (!r.ok) throw new Error(`${API} answered ${r.status}`);
   data = await r.json();
-  if (!Array.isArray(data.galleries) || !Array.isArray(data.sections) || !data.hash) throw new Error('unexpected response');
+  if (!Array.isArray(data.galleries) || !(Array.isArray(data.albums) || Array.isArray(data.sections)) || !data.hash) throw new Error('unexpected response');
 } catch (e) {
   if (STRICT || !existsSync(OUT)) {
     console.error(`sync-gallery: could not load galleries: ${e.message}`);
@@ -35,7 +35,16 @@ try {
   data = JSON.parse(readFileSync(OUT, 'utf8'));
 }
 
-data.sections = data.sections.map((s) => ({ ...s, title: tidy(s.title), intro: tidy(s.intro) }));
+// three layers: albums hold galleries, galleries hold photos. (A studio from
+// before albums sent flat "sections"; they read as albums of the same name.)
+const slugify = (t) => t.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'album';
+if (!Array.isArray(data.albums)) {
+  const map = new Map(data.sections.map((s) => [s.id, slugify(s.title)]));
+  data.albums = data.sections.map((s) => ({ slug: map.get(s.id), title: s.title, intro: s.intro, cover: '' }));
+  data.galleries = data.galleries.map(({ section, ...g }) => ({ ...g, album: map.get(section) }));
+  delete data.sections;
+}
+data.albums = data.albums.map((a) => ({ ...a, title: tidy(a.title), intro: tidy(a.intro) }));
 data.galleries = data.galleries.map((g) => ({
   ...g,
   title: tidy(g.title),

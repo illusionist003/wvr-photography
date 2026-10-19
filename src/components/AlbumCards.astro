@@ -1,0 +1,127 @@
+---
+/* Album cards: the first layer of the portfolio. A big cover, the album's
+   name, its line, and how many galleries and photos are inside. */
+import Icon from './Icon.astro';
+import Photo from './Photo.astro';
+import { albumPath, type Album } from '../data/collections';
+import { href } from '../lib/paths';
+
+interface Props {
+  items: Album[];
+  eagerFirst?: boolean;
+}
+const { items, eagerFirst = false } = Astro.props;
+---
+
+<ul class:list={['ac', items.length === 1 && 'ac--one', items.length === 2 && 'ac--two']}>
+  {
+    items.map((a, i) => (
+      <li>
+        <a class="ac__card" href={href(albumPath(a))}>
+          <Photo src={a.cover.src} alt={a.cover.alt} ratio={4 / 5} eager={eagerFirst && i === 0} widths={[480, 720, 960]} sizes="(min-width: 64rem) 32vw, (min-width: 40rem) 50vw, 100vw" class="frame zoom ac__img" />
+          <span class="ac__shade" aria-hidden="true" />
+          <span class="ac__body">
+            <span class="ac__title">{a.title}</span>
+            {a.intro && <span class="ac__intro">{a.intro}</span>}
+            <span class="ac__meta">
+              {a.galleries.length} {a.galleries.length === 1 ? 'gallery' : 'galleries'}, {a.photoCount} photos
+              <Icon name="arrow" />
+            </span>
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .ac {
+    display: grid;
+    gap: clamp(0.75rem, 1.6vw, 1.25rem);
+  }
+
+  @media (min-width: 40rem) {
+    .ac {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ac--one {
+      grid-template-columns: minmax(0, 32rem);
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .ac {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .ac--two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .ac__card {
+    position: relative;
+    display: block;
+    color: var(--on-ink);
+    text-decoration: none;
+    border-radius: var(--r);
+    overflow: hidden;
+  }
+
+  .ac__card :global(.ac__img) {
+    aspect-ratio: 4 / 5;
+  }
+
+  .ac__shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgb(10 13 14 / 0.9) 0%, rgb(10 13 14 / 0.45) 40%, rgb(10 13 14 / 0) 70%);
+    pointer-events: none;
+  }
+
+  .ac__body {
+    position: absolute;
+    inset: auto 0 0 0;
+    display: grid;
+    gap: 0.35rem;
+    padding: clamp(1.1rem, 2.4vw, 1.6rem);
+  }
+
+  .ac__title {
+    font-size: clamp(1.5rem, 1.2vw + 1.1rem, 2rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+
+  .ac__intro {
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: rgb(242 244 243 / 0.82);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ac__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--teal-soft);
+  }
+
+  .ac__meta :global(svg) {
+    width: 1rem;
+    height: 1rem;
+    transition: translate 0.22s var(--ease);
+  }
+
+  .ac__card:hover .ac__meta :global(svg) {
+    translate: 0.25rem 0;
+  }
+</style>

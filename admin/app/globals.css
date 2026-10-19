@@ -405,18 +405,7 @@ textarea:focus {
   color: var(--bad);
 }
 
-/* ---------- galleries list ---------- */
-
-.group {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.group__title {
-  font-size: 0.875rem;
-  font-weight: 650;
-  color: var(--teal-soft);
-}
+/* ---------- album and gallery lists ---------- */
 
 .rows {
   margin: 0;
@@ -457,6 +446,7 @@ textarea:focus {
 .row__text {
   display: grid;
   min-width: 0;
+  flex: 1;
 }
 
 .row__title {
@@ -469,6 +459,23 @@ textarea:focus {
 .row__meta {
   font-size: 0.875rem;
   color: var(--muted);
+}
+
+.row__chev {
+  flex: none;
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.crumbs {
+  margin-top: -0.75rem;
+}
+
+.back__label {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .row__order {
@@ -651,36 +658,6 @@ textarea:focus {
 
 .details .link.danger {
   justify-self: start;
-}
-
-/* ---------- sections ---------- */
-
-.sections {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 1rem;
-}
-
-.sec {
-  display: grid;
-  gap: 0.75rem;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  background: var(--ink-2);
-}
-
-.sec__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 1rem;
-}
-
-.sec__actions .muted {
-  margin-right: auto;
 }
 
 /* ---------- sheets ---------- */

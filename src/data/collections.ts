@@ -1,16 +1,16 @@
-/* The galleries, as Matthew manages them in WVR Studio (the admin app at
-   wvr-admin.vercel.app). scripts/sync-gallery.mjs saves the published ones to
+/* The albums and galleries, as Matthew manages them in WVR Studio (the admin
+   app at wvr-admin.vercel.app). Three layers: an album holds galleries, a
+   gallery holds photos. scripts/sync-gallery.mjs saves the published ones to
    src/content/gallery.json and their photos to src/assets/gallery/ before
    every build; nothing here is edited by hand any more.
 
-   Addresses stay /portfolio-collections/<slug>/, the same as the Wix site, so
-   old links keep working. Every string here was typed by Matthew, so pages
-   render it as plain text, and scripts/postbuild.mjs leaves it out of the
-   house-style checks. */
+   Galleries keep /portfolio-collections/<slug>/, the same as the Wix site, so
+   old links keep working; albums live at /portfolio/<album>/. Every string
+   here was typed by Matthew, so pages render it as plain text, and
+   scripts/postbuild.mjs leaves it out of the house-style checks. */
 import type { ImageMetadata } from 'astro';
 import data from '../content/gallery.json';
 
-export type Group = string;
 export type ServiceId = 'events' | 'products' | 'portraits';
 
 export interface GalleryPhoto {
@@ -27,7 +27,8 @@ export interface Collection {
   title: string;
   /** Short type label shown on cards. */
   kind: string;
-  group: Group;
+  /** The album's slug. */
+  album: string;
   blurb: string;
   cover: GalleryPhoto;
   photos: GalleryPhoto[];
@@ -48,7 +49,7 @@ interface RawGallery {
   slug: string;
   title: string;
   kind: string;
-  section: string;
+  album: string;
   service: ServiceId;
   blurb: string;
   cover: string;
@@ -65,7 +66,7 @@ export const COLLECTIONS: Collection[] = (data.galleries as RawGallery[]).map((g
     slug: g.slug,
     title: g.title,
     kind: g.kind || KIND[g.service] || 'Gallery',
-    group: g.section,
+    album: g.album,
     blurb: g.blurb,
     cover: photos.find((p) => p.key === g.cover) ?? photos[0],
     photos,
@@ -73,9 +74,25 @@ export const COLLECTIONS: Collection[] = (data.galleries as RawGallery[]).map((g
   };
 });
 
-export const GROUPS: { id: Group; title: string; intro: string }[] = (data.sections as { id: string; title: string; intro: string }[]).filter((s) =>
-  COLLECTIONS.some((c) => c.group === s.id),
-);
+export interface Album {
+  slug: string;
+  title: string;
+  intro: string;
+  cover: GalleryPhoto;
+  galleries: Collection[];
+  photoCount: number;
+}
+
+export const ALBUMS: Album[] = (data.albums as { slug: string; title: string; intro: string; cover: string }[])
+  .map((a) => {
+    const galleries = COLLECTIONS.filter((c) => c.album === a.slug);
+    const photos = galleries.flatMap((g) => g.photos);
+    return { slug: a.slug, title: a.title, intro: a.intro, galleries, photoCount: photos.length, cover: photos.find((p) => p.key === a.cover) ?? galleries[0]?.cover };
+  })
+  .filter((a) => a.galleries.length > 0);
+
+export const albumPath = (a: Album) => `/portfolio/${a.slug}/`;
+export const albumOf = (c: Collection) => ALBUMS.find((a) => a.slug === c.album)!;
 
 export const collectionPath = (c: Collection) => `/portfolio-collections/${c.slug}/`;
 export const collection = (slug: string) => COLLECTIONS.find((c) => c.slug === slug);
@@ -84,6 +101,6 @@ export const galleryOf = (key: string) => COLLECTIONS.find((c) => c.photos.some(
 
 /** Every piece of text Matthew typed, for the house-style checks to skip. */
 export const USER_TEXT = [
-  ...(data.sections as { title: string; intro: string }[]).flatMap((s) => [s.title, s.intro]),
+  ...(data.albums as { title: string; intro: string }[]).flatMap((a) => [a.title, a.intro]),
   ...COLLECTIONS.flatMap((c) => [c.title, c.kind, c.blurb, ...c.photos.flatMap((p) => [p.caption, p.alt])]),
 ].filter(Boolean);

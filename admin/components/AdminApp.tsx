@@ -1,8 +1,9 @@
 'use client';
 /* WVR Studio: the whole editor in one screen-at-a-time app, built for a phone
-   first. Galleries grouped by section; tap one to add photos, caption them,
-   pick a cover, reorder, or move them to another gallery. Everything saves by
-   itself; the site picks up published changes on its own. */
+   first. Three layers, the same as the website: albums, the galleries inside
+   each album, and the photos inside each gallery. Tap down through them; the
+   back button always goes up one layer. Everything saves by itself; the site
+   picks up published changes on its own. */
 import { upload } from '@vercel/blob/client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { newKey, prepare, slugify } from './images';
@@ -21,7 +22,7 @@ interface Gallery {
   slug: string;
   title: string;
   kind: string;
-  section: string;
+  album: string;
   service: Service;
   blurb: string;
   visible: boolean;
@@ -30,20 +31,21 @@ interface Gallery {
   createdAt: string;
   updatedAt: string;
 }
-interface Section {
-  id: string;
+interface Album {
+  slug: string;
   title: string;
   intro: string;
+  cover: string;
 }
 interface Content {
-  schema: 1;
+  schema: 2;
   version: number;
   updatedAt: string;
-  sections: Section[];
+  albums: Album[];
   galleries: Gallery[];
 }
 
-type View = { name: 'home' } | { name: 'gallery'; slug: string } | { name: 'sections' };
+type View = { name: 'home' } | { name: 'album'; slug: string } | { name: 'gallery'; slug: string };
 type SaveState = 'saved' | 'saving' | 'error' | 'conflict';
 interface Job {
   id: string;
@@ -76,6 +78,7 @@ export default function AdminApp({ site }: { site: string }) {
   const [selecting, setSelecting] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
+  const [creatingAlbum, setCreatingAlbum] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
   const contentRef = useRef<Content | null>(null);
@@ -96,7 +99,7 @@ export default function AdminApp({ site }: { site: string }) {
     if (r.status === 401) return void (location.href = '/login');
     if (!r.ok) return setLoadError('Could not load your galleries. Check the connection and try again.');
     const j = await r.json();
-    const c: Content = j.content ?? { schema: 1, version: 0, updatedAt: '', sections: [{ id: 'work', title: 'Work', intro: '' }], galleries: [] };
+    const c: Content = j.content ?? { schema: 2, version: 0, updatedAt: '', albums: [{ slug: 'work', title: 'Work', intro: '', cover: '' }], galleries: [] };
     contentRef.current = c;
     etagRef.current = j.etag;
     setContent(c);
@@ -275,10 +278,16 @@ export default function AdminApp({ site }: { site: string }) {
   /* ---------- derived ---------- */
 
   const gallery = view.name === 'gallery' ? content?.galleries.find((g) => g.slug === view.slug) : undefined;
+  const album = view.name === 'album' ? content?.albums.find((a) => a.slug === view.slug) : gallery ? content?.albums.find((a) => a.slug === gallery.album) : undefined;
   const sheetPhoto = gallery && sheet ? gallery.photos.find((p) => p.key === sheet) : undefined;
-  const bySection = useMemo(() => {
+  const byAlbum = useMemo(() => {
     if (!content) return [];
-    return content.sections.map((s) => ({ section: s, galleries: content.galleries.filter((g) => g.section === s.id) }));
+    return content.albums.map((a) => {
+      const galleries = content.galleries.filter((g) => g.album === a.slug);
+      const photos = galleries.flatMap((g) => g.photos);
+      const cover = photos.find((p) => p.key === a.cover) ?? galleries.map((g) => g.photos.find((p) => p.key === g.cover) ?? g.photos[0]).find(Boolean);
+      return { album: a, galleries, photoCount: photos.length, cover, live: galleries.some((g) => g.visible && g.photos.length) };
+    });
   }, [content]);
 
   useEffect(() => {
@@ -290,7 +299,37 @@ export default function AdminApp({ site }: { site: string }) {
 
   /* ---------- actions ---------- */
 
-  function createGallery(title: string, section: string, service: Service) {
+  function createAlbum(title: string, intro: string) {
+    if (!contentRef.current) return '';
+    const taken = new Set(contentRef.current.albums.map((a) => a.slug));
+    const base = slugify(title);
+    let slug = base;
+    for (let n = 2; taken.has(slug); n++) slug = `${base}-${n}`;
+    update((c) => ({ ...c, albums: [...c.albums, { slug, title: title.trim(), intro: intro.trim(), cover: '' }] }));
+    return slug;
+  }
+
+  function updateAlbum(slug: string, fn: (a: Album) => Album) {
+    update((c) => ({ ...c, albums: c.albums.map((a) => (a.slug === slug ? fn(a) : a)) }));
+  }
+
+  function moveAlbum(slug: string, dir: -1 | 1) {
+    update((c) => {
+      const i = c.albums.findIndex((a) => a.slug === slug);
+      if (i + dir < 0 || i + dir >= c.albums.length) return c;
+      return { ...c, albums: move(c.albums, i, i + dir) };
+    });
+  }
+
+  function deleteAlbum(slug: string) {
+    const c = contentRef.current;
+    if (!c || c.galleries.some((g) => g.album === slug) || c.albums.length === 1) return;
+    if (!confirm('Delete this empty album?')) return;
+    update((x) => ({ ...x, albums: x.albums.filter((a) => a.slug !== slug) }));
+    setView({ name: 'home' });
+  }
+
+  function createGallery(title: string, albumSlug: string, service: Service) {
     if (!contentRef.current) return '';
     const taken = new Set(contentRef.current.galleries.map((g) => g.slug));
     const base = slugify(title);
@@ -299,7 +338,7 @@ export default function AdminApp({ site }: { site: string }) {
     const now = new Date().toISOString();
     update((c) => ({
       ...c,
-      galleries: [{ slug, title: title.trim(), kind: '', section, service, blurb: '', visible: false, cover: '', photos: [], createdAt: now, updatedAt: now }, ...c.galleries],
+      galleries: [{ slug, title: title.trim(), kind: '', album: albumSlug, service, blurb: '', visible: false, cover: '', photos: [], createdAt: now, updatedAt: now }, ...c.galleries],
     }));
     return slug;
   }
@@ -307,9 +346,9 @@ export default function AdminApp({ site }: { site: string }) {
   function moveGallery(slug: string, dir: -1 | 1) {
     update((c) => {
       const i = c.galleries.findIndex((g) => g.slug === slug);
-      const sec = c.galleries[i].section;
+      const home = c.galleries[i].album;
       let j = i + dir;
-      while (j >= 0 && j < c.galleries.length && c.galleries[j].section !== sec) j += dir;
+      while (j >= 0 && j < c.galleries.length && c.galleries[j].album !== home) j += dir;
       if (j < 0 || j >= c.galleries.length) return c;
       return { ...c, galleries: move(c.galleries, i, j) };
     });
@@ -320,7 +359,7 @@ export default function AdminApp({ site }: { site: string }) {
     if (!g) return;
     if (!confirm(`Delete the gallery "${g.title}" and its ${g.photos.length} photos from the site? This cannot be undone here.`)) return;
     update((c) => ({ ...c, galleries: c.galleries.filter((x) => x.slug !== slug) }));
-    setView({ name: 'home' });
+    setView({ name: 'album', slug: g.album });
   }
 
   function removePhotos(slug: string, keys: string[]) {
@@ -418,14 +457,19 @@ export default function AdminApp({ site }: { site: string }) {
               <span>WVR Studio</span>
             </div>
           ) : (
-            <button className="back" onClick={() => setView({ name: 'home' })}>
+            <button className="back" onClick={() => setView(view.name === 'gallery' && album ? { name: 'album', slug: album.slug } : { name: 'home' })}>
               <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
                 <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Galleries
+              <span className="back__label">{view.name === 'gallery' && album ? album.title : 'Albums'}</span>
             </button>
           )}
-          <a className="top__site" href={gallery ? `${site}/portfolio-collections/${gallery.slug}/` : `${site}/portfolio/`} target="_blank" rel="noopener">
+          <a
+            className="top__site"
+            href={gallery ? `${site}/portfolio-collections/${gallery.slug}/` : album ? `${site}/portfolio/${album.slug}/` : `${site}/portfolio/`}
+            target="_blank"
+            rel="noopener"
+          >
             View site
           </a>
         </div>
@@ -478,15 +522,72 @@ export default function AdminApp({ site }: { site: string }) {
       {view.name === 'home' && (
         <main className="page">
           <div className="page__head">
-            <h1>Galleries</h1>
-            <button className="btn ghost small" onClick={() => setView({ name: 'sections' })}>
-              Sections
+            <h1>Albums</h1>
+          </div>
+          <p className="muted small">Albums hold galleries, and galleries hold photos. The website's Galleries menu follows the same order.</p>
+          <ul className="rows">
+            {byAlbum.map(({ album: a, galleries, photoCount, cover, live: on }, i) => (
+              <li key={a.slug} className="row">
+                <button className="row__main" onClick={() => setView({ name: 'album', slug: a.slug })}>
+                  {cover ? <img src={cover.thumb} alt="" width={64} height={64} loading="lazy" /> : <span className="row__empty" />}
+                  <span className="row__text">
+                    <span className="row__title">{a.title}</span>
+                    <span className="row__meta">
+                      {galleries.length} {galleries.length === 1 ? 'gallery' : 'galleries'} · {photoCount} {photoCount === 1 ? 'photo' : 'photos'}
+                      {on ? '' : ' · Not on site'}
+                    </span>
+                  </span>
+                  <Chevron />
+                </button>
+                <span className="row__order">
+                  <button aria-label={`Move ${a.title} up`} disabled={i === 0} onClick={() => moveAlbum(a.slug, -1)}>
+                    ▲
+                  </button>
+                  <button aria-label={`Move ${a.title} down`} disabled={i === byAlbum.length - 1} onClick={() => moveAlbum(a.slug, 1)}>
+                    ▼
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <form className="signout" method="post" action="/api/logout">
+            <button className="link muted" type="submit">
+              Sign out
+            </button>
+          </form>
+          <div className="dock">
+            <button className="btn primary block" onClick={() => setCreatingAlbum(true)}>
+              New album
             </button>
           </div>
-          {bySection.map(({ section, galleries }) => (
-            <section key={section.id} className="group">
-              <h2 className="group__title">{section.title}</h2>
-              {galleries.length === 0 && <p className="muted small">No galleries in this section yet.</p>}
+        </main>
+      )}
+
+      {view.name === 'album' && !album && (
+        <main className="page">
+          <p>This album was deleted.</p>
+        </main>
+      )}
+
+      {view.name === 'album' && album && (() => {
+        const entry = byAlbum.find((b) => b.album.slug === album.slug)!;
+        const galleries = entry.galleries;
+        const coverChoices = galleries.flatMap((g) => (g.photos.length ? [{ key: g.photos.find((p) => p.key === g.cover)?.key ?? g.photos[0].key, label: g.title }] : []));
+        return (
+          <main className="page">
+            <div className="page__head">
+              <h1>{album.title}</h1>
+            </div>
+            <p className="crumbs small muted">Albums / {album.title}</p>
+            <h2>
+              {galleries.length} {galleries.length === 1 ? 'gallery' : 'galleries'}
+            </h2>
+            {galleries.length === 0 ? (
+              <button className="empty" onClick={() => setCreating(true)}>
+                <strong>Add the first gallery</strong>
+                <span className="muted small">A gallery is one set of photos, like a single event or session.</span>
+              </button>
+            ) : (
               <ul className="rows">
                 {galleries.map((g, i) => {
                   const cover = g.photos.find((p) => p.key === g.cover) ?? g.photos[0];
@@ -501,6 +602,7 @@ export default function AdminApp({ site }: { site: string }) {
                             {g.visible ? '' : ' · Hidden'}
                           </span>
                         </span>
+                        <Chevron />
                       </button>
                       <span className="row__order">
                         <button aria-label={`Move ${g.title} up`} disabled={i === 0} onClick={() => moveGallery(g.slug, -1)}>
@@ -514,20 +616,52 @@ export default function AdminApp({ site }: { site: string }) {
                   );
                 })}
               </ul>
+            )}
+
+            <section className="details">
+              <h2>Album details</h2>
+              <label>
+                Album name
+                <input value={album.title} maxLength={60} onChange={(e) => updateAlbum(album.slug, (a) => ({ ...a, title: e.target.value }))} />
+              </label>
+              <label>
+                A line about this album <span className="muted">(optional, shown on the website)</span>
+                <textarea rows={2} maxLength={300} value={album.intro} onChange={(e) => updateAlbum(album.slug, (a) => ({ ...a, intro: e.target.value }))} />
+              </label>
+              {coverChoices.length > 1 && (
+                <label>
+                  Cover photo
+                  <select value={coverChoices.some((c) => c.key === album.cover) ? album.cover : ''} onChange={(e) => updateAlbum(album.slug, (a) => ({ ...a, cover: e.target.value }))}>
+                    <option value="">The first gallery's cover</option>
+                    {coverChoices.map((c) => (
+                      <option key={c.key} value={c.key}>
+                        The cover of {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <p className="fine muted">
+                Web address: {site.replace(/^https?:\/\//, '')}/portfolio/{album.slug}/
+              </p>
+              <button
+                className="link danger"
+                disabled={galleries.length > 0 || content.albums.length === 1}
+                title={galleries.length > 0 ? 'Move or delete its galleries first' : undefined}
+                onClick={() => deleteAlbum(album.slug)}
+              >
+                {galleries.length > 0 ? 'To delete this album, move or delete its galleries first' : 'Delete this album'}
+              </button>
             </section>
-          ))}
-          <form className="signout" method="post" action="/api/logout">
-            <button className="link muted" type="submit">
-              Sign out
-            </button>
-          </form>
-          <div className="dock">
-            <button className="btn primary block" onClick={() => setCreating(true)}>
-              New gallery
-            </button>
-          </div>
-        </main>
-      )}
+
+            <div className="dock">
+              <button className="btn primary block" onClick={() => setCreating(true)}>
+                New gallery in this album
+              </button>
+            </div>
+          </main>
+        );
+      })()}
 
       {view.name === 'gallery' && !gallery && (
         <main className="page">
@@ -599,13 +733,7 @@ export default function AdminApp({ site }: { site: string }) {
                 onChange={(e) => movePhotosTo(gallery.slug, e.target.value, [...picked])}
               >
                 <option value="">Move to…</option>
-                {content.galleries
-                  .filter((g) => g.slug !== gallery.slug)
-                  .map((g) => (
-                    <option key={g.slug} value={g.slug}>
-                      {g.title}
-                    </option>
-                  ))}
+                <GalleryOptions albums={content.albums} galleries={content.galleries.filter((g) => g.slug !== gallery.slug)} />
               </select>
               <button className="btn danger small" disabled={!picked.size} onClick={() => removePhotos(gallery.slug, [...picked])}>
                 Remove
@@ -664,11 +792,11 @@ export default function AdminApp({ site }: { site: string }) {
             </label>
             <div className="two">
               <label>
-                Section on the portfolio page
-                <select value={gallery.section} onChange={(e) => updateGallery(gallery.slug, (g) => ({ ...g, section: e.target.value }))}>
-                  {content.sections.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.title}
+                Album
+                <select value={gallery.album} onChange={(e) => updateGallery(gallery.slug, (g) => ({ ...g, album: e.target.value }))}>
+                  {content.albums.map((a) => (
+                    <option key={a.slug} value={a.slug}>
+                      {a.title}
                     </option>
                   ))}
                 </select>
@@ -708,72 +836,30 @@ export default function AdminApp({ site }: { site: string }) {
         </main>
       )}
 
-      {view.name === 'sections' && (
-        <main className="page">
-          <div className="page__head">
-            <h1>Sections</h1>
-          </div>
-          <p className="muted small">Sections group your galleries on the portfolio page. Empty sections are left off the site.</p>
-          <ul className="sections">
-            {content.sections.map((s, i) => {
-              const used = content.galleries.filter((g) => g.section === s.id).length;
-              return (
-                <li key={s.id} className="sec">
-                  <label>
-                    Name
-                    <input value={s.title} maxLength={60} onChange={(e) => update((c) => ({ ...c, sections: c.sections.map((x) => (x.id === s.id ? { ...x, title: e.target.value } : x)) }))} />
-                  </label>
-                  <label>
-                    One line under the name <span className="muted">(optional)</span>
-                    <input value={s.intro} maxLength={220} onChange={(e) => update((c) => ({ ...c, sections: c.sections.map((x) => (x.id === s.id ? { ...x, intro: e.target.value } : x)) }))} />
-                  </label>
-                  <div className="sec__actions">
-                    <span className="muted small">
-                      {used} {used === 1 ? 'gallery' : 'galleries'}
-                    </span>
-                    <button className="link" disabled={i === 0} onClick={() => update((c) => ({ ...c, sections: move(c.sections, i, i - 1) }))}>
-                      Move up
-                    </button>
-                    <button className="link" disabled={i === content.sections.length - 1} onClick={() => update((c) => ({ ...c, sections: move(c.sections, i, i + 1) }))}>
-                      Move down
-                    </button>
-                    <button
-                      className="link danger"
-                      disabled={used > 0 || content.sections.length === 1}
-                      title={used > 0 ? 'Move its galleries to another section first' : undefined}
-                      onClick={() => update((c) => ({ ...c, sections: c.sections.filter((x) => x.id !== s.id) }))}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="dock">
-            <button
-              className="btn primary block"
-              onClick={() =>
-                update((c) => {
-                  const taken = new Set(c.sections.map((s) => s.id));
-                  let id = 'section';
-                  for (let n = 2; taken.has(id); n++) id = `section-${n}`;
-                  return { ...c, sections: [...c.sections, { id, title: 'New section', intro: '' }] };
-                })
-              }
-            >
-              Add a section
-            </button>
-          </div>
-        </main>
+      {creating && (
+        <NewGallery
+          albums={content.albums}
+          defaultAlbum={album?.slug ?? content.albums[0]?.slug ?? ''}
+          onCancel={() => setCreating(false)}
+          onCreate={(title, albumSlug, service) => {
+            const slug = createGallery(title, albumSlug, service);
+            setCreating(false);
+            setView({ name: 'gallery', slug });
+            pickFor(slug);
+          }}
+        />
       )}
 
-      {creating && <NewGallery sections={content.sections} onCancel={() => setCreating(false)} onCreate={(title, section, service) => {
-        const slug = createGallery(title, section, service);
-        setCreating(false);
-        setView({ name: 'gallery', slug });
-        pickFor(slug);
-      }} />}
+      {creatingAlbum && (
+        <NewAlbum
+          onCancel={() => setCreatingAlbum(false)}
+          onCreate={(title, intro) => {
+            const slug = createAlbum(title, intro);
+            setCreatingAlbum(false);
+            setView({ name: 'album', slug });
+          }}
+        />
+      )}
 
       {gallery && sheetPhoto && (
         <PhotoSheet
@@ -782,6 +868,7 @@ export default function AdminApp({ site }: { site: string }) {
           count={gallery.photos.length}
           isCover={gallery.cover === sheetPhoto.key}
           others={content.galleries.filter((g) => g.slug !== gallery.slug)}
+          albums={content.albums}
           onClose={() => setSheet(null)}
           onChange={(patch) => updateGallery(gallery.slug, (g) => ({ ...g, photos: g.photos.map((p) => (p.key === sheetPhoto.key ? { ...p, ...patch } : p)) }))}
           onCover={() => updateGallery(gallery.slug, (g) => ({ ...g, cover: sheetPhoto.key }))}
@@ -794,9 +881,77 @@ export default function AdminApp({ site }: { site: string }) {
   );
 }
 
-function NewGallery({ sections, onCancel, onCreate }: { sections: Section[]; onCancel: () => void; onCreate: (title: string, section: string, service: Service) => void }) {
+function Chevron() {
+  return (
+    <svg className="row__chev" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function GalleryOptions({ albums, galleries }: { albums: Album[]; galleries: Gallery[] }) {
+  return (
+    <>
+      {albums.map((a) => {
+        const inside = galleries.filter((g) => g.album === a.slug);
+        if (!inside.length) return null;
+        return (
+          <optgroup key={a.slug} label={a.title}>
+            {inside.map((g) => (
+              <option key={g.slug} value={g.slug}>
+                {g.title}
+              </option>
+            ))}
+          </optgroup>
+        );
+      })}
+    </>
+  );
+}
+
+function NewAlbum({ onCancel, onCreate }: { onCancel: () => void; onCreate: (title: string, intro: string) => void }) {
   const [title, setTitle] = useState('');
-  const [section, setSection] = useState(sections[0]?.id ?? '');
+  const [intro, setIntro] = useState('');
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    ref.current?.showModal();
+  }, []);
+  return (
+    <dialog ref={ref} className="sheet" onClose={onCancel} aria-labelledby="na-title">
+      <form
+        method="dialog"
+        className="sheet__body"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (title.trim()) onCreate(title, intro);
+        }}
+      >
+        <h2 id="na-title">New album</h2>
+        <p className="muted small">An album holds galleries. For example an album called “Weddings” with a gallery for each couple, or “Smith wedding” with Ceremony, Reception and Portraits.</p>
+        <label>
+          Album name
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Weddings" maxLength={60} required autoFocus />
+        </label>
+        <label>
+          A line about it <span className="muted">(optional)</span>
+          <input value={intro} onChange={(e) => setIntro(e.target.value)} maxLength={300} />
+        </label>
+        <div className="sheet__actions">
+          <button type="button" className="btn ghost" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit" className="btn primary" disabled={!title.trim()}>
+            Create album
+          </button>
+        </div>
+      </form>
+    </dialog>
+  );
+}
+
+function NewGallery({ albums, defaultAlbum, onCancel, onCreate }: { albums: Album[]; defaultAlbum: string; onCancel: () => void; onCreate: (title: string, album: string, service: Service) => void }) {
+  const [title, setTitle] = useState('');
+  const [albumSlug, setAlbumSlug] = useState(defaultAlbum);
   const [service, setService] = useState<Service>('events');
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -809,7 +964,7 @@ function NewGallery({ sections, onCancel, onCreate }: { sections: Section[]; onC
         className="sheet__body"
         onSubmit={(e) => {
           e.preventDefault();
-          if (title.trim()) onCreate(title, section, service);
+          if (title.trim()) onCreate(title, albumSlug, service);
         }}
       >
         <h2 id="ng-title">New gallery</h2>
@@ -819,11 +974,11 @@ function NewGallery({ sections, onCancel, onCreate }: { sections: Section[]; onC
         </label>
         <div className="two">
           <label>
-            Section
-            <select value={section} onChange={(e) => setSection(e.target.value)}>
-              {sections.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.title}
+            Album
+            <select value={albumSlug} onChange={(e) => setAlbumSlug(e.target.value)}>
+              {albums.map((a) => (
+                <option key={a.slug} value={a.slug}>
+                  {a.title}
                 </option>
               ))}
             </select>
@@ -831,9 +986,9 @@ function NewGallery({ sections, onCancel, onCreate }: { sections: Section[]; onC
           <label>
             Type of work
             <select value={service} onChange={(e) => setService(e.target.value as Service)}>
-              {(Object.keys(SERVICE_LABEL) as Service[]).map((s) => (
-                <option key={s} value={s}>
-                  {SERVICE_LABEL[s]}
+              {(Object.keys(SERVICE_LABEL) as Service[]).map((sv) => (
+                <option key={sv} value={sv}>
+                  {SERVICE_LABEL[sv]}
                 </option>
               ))}
             </select>
@@ -859,6 +1014,7 @@ function PhotoSheet(props: {
   count: number;
   isCover: boolean;
   others: Gallery[];
+  albums: Album[];
   onClose: () => void;
   onChange: (patch: Partial<Photo>) => void;
   onCover: () => void;
@@ -901,11 +1057,7 @@ function PhotoSheet(props: {
           </button>
           <select aria-label="Move to another gallery" value="" onChange={(e) => props.onMoveTo(e.target.value)} disabled={!others.length}>
             <option value="">Move to gallery…</option>
-            {others.map((g) => (
-              <option key={g.slug} value={g.slug}>
-                {g.title}
-              </option>
-            ))}
+            <GalleryOptions albums={props.albums} galleries={others} />
           </select>
         </div>
         <div className="sheet__actions">
