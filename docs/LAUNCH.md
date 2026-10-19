@@ -1,5 +1,22 @@
 # Launch
 
+## Repository transfer to Matthew (started 2026-10-19)
+
+The repository was offered to Matthew's GitHub account, `illusionist003`. He
+has to accept from GitHub's email within one day, or the offer expires and it
+has to be sent again. Nick (nradachy-web) stays on it as a collaborator.
+GitHub does not redirect Pages addresses, so after he accepts:
+
+1. The preview moves to https://illusionist003.github.io/wvr-photography/
+   (the workflow already builds for whoever owns the repository). Check that
+   Pages is still set to GitHub Actions in the repository settings, then run
+   the Deploy workflow once.
+2. In the Vercel project `wvr-admin`: set `SITE_URL` to
+   `https://illusionist003.github.io/wvr-photography` and `GITHUB_REPO` to
+   `illusionist003/wvr-photography`, then redeploy the studio.
+3. Locally: `git remote set-url origin https://github.com/illusionist003/wvr-photography.git`.
+4. The old https://nradachy-web.github.io/wvr-photography/ link stops working.
+
 The preview is live at https://nradachy-web.github.io/wvr-photography/ (every
 page noindex, robots.txt closed). The Wix site stays live until all of this is
 done.

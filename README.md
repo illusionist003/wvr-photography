@@ -3,7 +3,7 @@
 Website for WVR Photography (Matthew Weaver, Fenton, MI), rebuilt by Modern Apex
 Strategies from his Wix site at wvrphotography.com.
 
-- Preview: https://nradachy-web.github.io/wvr-photography/ (noindex, robots closed)
+- Preview: https://nradachy-web.github.io/wvr-photography/ (noindex, robots closed). Being transferred to Matthew's account `illusionist003`; after he accepts it moves to https://illusionist003.github.io/wvr-photography/ (see docs/LAUNCH.md).
 - Stack: Astro 7, static HTML, CSS inlined, one font, no client framework.
 - Every business fact: `src/data/site.ts`. Site photos: `src/data/photos.ts`.
   Service pages: `src/data/services.ts`.
