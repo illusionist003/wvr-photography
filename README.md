@@ -5,14 +5,18 @@ Strategies from his Wix site at wvrphotography.com.
 
 - Preview: https://nradachy-web.github.io/wvr-photography/ (noindex, robots closed)
 - Stack: Astro 7, static HTML, CSS inlined, one font, no client framework.
-- Every business fact: `src/data/site.ts`. Photos: `src/data/photos.ts`.
-  Galleries: `src/data/collections.ts`. Service pages: `src/data/services.ts`.
+- Every business fact: `src/data/site.ts`. Site photos: `src/data/photos.ts`.
+  Service pages: `src/data/services.ts`.
+- Galleries are managed by Matthew in **WVR Studio** (https://wvr-admin.vercel.app,
+  code in `admin/`, see `docs/STUDIO.md`). Each build pulls them in with
+  `scripts/sync-gallery.mjs`; do not edit `src/content/gallery.json` by hand.
 
 ```sh
 npm ci
 npm run dev            # local
 npm run build:preview  # what GitHub Pages serves today (/wvr-photography/ base, noindex)
 npm run build          # production build for wvrphotography.com
+npm run sync           # fetch the published galleries and their photos from the studio
 npm run crops          # phone cuts of the hero photos (after changing a hero or focus)
 npm run icons          # favicons and the share image from the logo
 ```

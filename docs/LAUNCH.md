@@ -10,9 +10,13 @@ done.
    preview and confirm it lands in his inbox. Until then the form opens the
    visitor's email app addressed to him, which works but is weaker. Never ship
    a key that has not delivered a real message.
-3. Production build: in `.github/workflows/deploy.yml` remove `BASE_PATH`, add
-   `public/CNAME` with `wvrphotography.com`, set the custom domain in the
-   repository's Pages settings, enforce HTTPS.
+3. Production build: in `.github/workflows/deploy.yml` remove `BASE_PATH` and set
+   `SITE_URL` to `https://wvrphotography.com`, add `public/CNAME` with
+   `wvrphotography.com`, set the custom domain in the repository's Pages
+   settings, enforce HTTPS. In the Vercel project `wvr-admin`, set `SITE_URL`
+   to `https://wvrphotography.com` and redeploy, so the studio checks the
+   right site. Optionally give the studio its own address
+   (`studio.wvrphotography.com`, CNAME to Vercel).
 4. DNS at his registrar (Wix holds it today): apex A records to the four GitHub
    Pages IPs, `www` CNAME `nradachy-web.github.io`. Touch web records only;
    leave MX and any email records alone.
