@@ -1,5 +1,6 @@
 ---
-/* Layer three: one gallery and its photos, at the address his Wix site used
+/* Layers three and four: one gallery (its sub galleries, then its photos) or
+   one sub gallery (its photos), at the address his Wix site used
    (/portfolio-collections/<slug>), inside its album. Built from what Matthew
    publishes in WVR Studio. The photos come straight after a short heading; then the review
    from that client, if there is one, the way to book the same kind of shoot,
@@ -13,7 +14,7 @@ import SectionHead from '../../components/SectionHead.astro';
 import CollectionCards from '../../components/CollectionCards.astro';
 import ContactBand from '../../components/ContactBand.astro';
 import Icon from '../../components/Icon.astro';
-import { albumOf, albumPath, COLLECTIONS, collectionPath, type Collection } from '../../data/collections';
+import { albumOf, albumPath, COLLECTIONS, collectionPath, GALLERIES, parentOf, type Collection } from '../../data/collections';
 import { REVIEWS } from '../../data/reviews';
 import { service } from '../../data/services';
 import { href } from '../../lib/paths';
@@ -26,13 +27,16 @@ export function getStaticPaths() {
 const { c } = Astro.props as { c: Collection };
 const s = service(c.service);
 const album = albumOf(c);
-// next in the same album first, then the rest of the portfolio
-const sameAlbum = album.galleries.filter((g) => g !== c);
-const others = [...sameAlbum, ...COLLECTIONS.filter((g) => g.album !== c.album)].slice(0, 3);
+const parent = parentOf(c);
+// the next ones beside it first (in the same gallery, or the same album), then the rest of the portfolio
+const sisters = (parent ? parent.subs : album.galleries).filter((g) => g !== c);
+const others = [...sisters, ...(parent ? [parent] : []), ...GALLERIES.filter((g) => g.album !== c.album)].slice(0, 3);
+const home = parent ? { title: parent.title, path: collectionPath(parent) } : { title: album.title, path: albumPath(album) };
 const path = collectionPath(c);
 const crumbs = [
   { name: 'Galleries', path: '/portfolio/' },
   { name: album.title, path: albumPath(album) },
+  ...(parent ? [{ name: parent.title, path: collectionPath(parent) }] : []),
   { name: c.title, path },
 ];
 const KIND = { events: 'Event', products: 'Product', portraits: 'Portrait or headshot' } as const;
@@ -49,7 +53,7 @@ const longTitle = `${c.title} Gallery${brand}`;
 const title = longTitle.length < 25 ? `${c.title} Gallery${brand}, Fenton MI` : longTitle.length <= 70 ? longTitle : `${clamp(c.title, 70 - brand.length)}${brand}`;
 
 const tail = 'Photographed by Matthew Weaver of WVR Photography in Fenton, MI.';
-const count = `${c.photos.length} ${c.photos.length === 1 ? 'photo' : 'photos'}`;
+const count = `${c.subs.length ? `${c.subs.length} ${c.subs.length === 1 ? 'gallery' : 'galleries'} and ` : ''}${c.photoCount} ${c.photoCount === 1 ? 'photo' : 'photos'}`;
 const lead = c.blurb ? `${c.blurb.replace(/[.!?]?$/, '.')} ${tail}` : `${c.title}, ${count} by Matthew Weaver of WVR Photography, an event, product and portrait photographer in Fenton, MI.`;
 const description = clamp(lead.length >= 70 ? lead : `${lead} See the gallery and get a free quote.`, 160);
 ---
@@ -57,11 +61,21 @@ const description = clamp(lead.length >= 70 ? lead : `${lead} See the gallery an
 <Base title={title} description={description} path={path} schema={[breadcrumbs(crumbs)]}>
   <PageHead user kicker={c.kind} title={c.title} lede={c.blurb || undefined} crumbs={crumbs} />
 
+  {
+    c.subs.length > 0 && (
+      <section class="band--tight ink gal" aria-label={`Galleries in ${c.title}`}>
+        <div class="wrap">
+          <CollectionCards items={c.subs} eagerFirst />
+        </div>
+      </section>
+    )
+  }
+
   <section class="band--tight ink gal" aria-label={`${c.title} photos`}>
     <div class="wrap">
-      <Gallery photos={c.photos} />
+      {c.photos.length > 0 && <Gallery photos={c.photos} />}
       <div class="gal__end">
-        <a class="arrow" href={href(albumPath(album))}><Icon name="back" /><span>More in {album.title}</span></a>
+        <a class="arrow" href={href(home.path)}><Icon name="back" /><span>More in {home.title}</span></a>
         <a class="btn primary" href="#quote">Book a shoot like this<Icon name="arrow" class="arr" /></a>
       </div>
     </div>
@@ -84,7 +98,7 @@ const description = clamp(lead.length >= 70 ? lead : `${lead} See the gallery an
     others.length > 0 && (
       <section class="band paper" aria-labelledby="more">
         <div class="wrap">
-          <SectionHead id="more" eyebrow="Keep looking" title={sameAlbum.length ? `More in ${album.title}.` : 'More galleries.'} layout="left" />
+          <SectionHead id="more" eyebrow="Keep looking" title={sisters.length ? `More in ${home.title}.` : 'More galleries.'} layout="left" />
           <CollectionCards items={others} />
         </div>
       </section>

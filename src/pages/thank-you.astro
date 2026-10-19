@@ -6,7 +6,7 @@ import CollectionCards from '../components/CollectionCards.astro';
 import SectionHead from '../components/SectionHead.astro';
 import Icon from '../components/Icon.astro';
 import { BRAND } from '../data/site';
-import { COLLECTIONS } from '../data/collections';
+import { GALLERIES } from '../data/collections';
 import { href } from '../lib/paths';
 ---
 
@@ -21,7 +21,7 @@ import { href } from '../lib/paths';
   <section class="band paper" aria-labelledby="look">
     <div class="wrap">
       <SectionHead id="look" eyebrow="While you wait" title="A few galleries." layout="left" />
-      <CollectionCards items={COLLECTIONS.slice(0, 3)} />
+      <CollectionCards items={GALLERIES.slice(0, 3)} />
     </div>
   </section>
 </Base>

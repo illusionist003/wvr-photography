@@ -1,10 +1,11 @@
-/* The studio's content, three layers deep: albums hold galleries, galleries
-   hold photos. One JSON file in the Blob store, written with an ETag
+/* The studio's content, four layers deep: albums hold galleries, a gallery
+   can hold sub galleries as well as photos, and sub galleries hold photos. One JSON file in the Blob store, written with an ETag
    check so two devices can never silently overwrite each other, plus a copy
    of every saved version under content/history/ for recovery.
 
    The public site only ever sees the published projection (published()):
-   visible galleries with at least one photo, and the albums they sit in. */
+   visible galleries with photos (or with published sub galleries), sub
+   galleries whose gallery is published, and the albums they sit in. */
 import { createHash } from 'node:crypto';
 import { BlobNotFoundError, BlobPreconditionFailedError, del, head, list, put } from '@vercel/blob';
 
@@ -25,8 +26,10 @@ export interface Gallery {
   slug: string;
   title: string;
   kind: string;
-  /** The album this gallery sits in. */
+  /** The album this gallery sits in (a sub gallery's is always its gallery's). */
   album: string;
+  /** The gallery this one sits inside; empty for a gallery directly in its album. One level only. */
+  parent: string;
   service: Service;
   blurb: string;
   visible: boolean;
@@ -41,7 +44,7 @@ export interface Album {
   slug: string;
   title: string;
   intro: string;
-  /** A photo key from one of its galleries; empty means the first gallery's cover. */
+  /** A photo key from one of its galleries or sub galleries; empty means the first gallery's cover. */
   cover: string;
 }
 
@@ -154,10 +157,14 @@ export function slugify(text: string) {
   );
 }
 
-/** Version 1 had flat "sections"; they become the first albums, nothing else changes. */
+/** Version 1 had flat "sections"; they become the first albums, nothing else
+    changes. Galleries saved before sub galleries sit directly in their album. */
 export function upgrade(raw: unknown): Content {
   const doc = raw as Record<string, unknown> & { schema?: number };
-  if (doc.schema === 2) return doc as unknown as Content;
+  if (doc.schema === 2) {
+    const c = doc as unknown as Content;
+    return { ...c, galleries: c.galleries.map((g) => ({ ...g, parent: g.parent ?? '' })) };
+  }
   const sections = (doc.sections as { id: string; title: string; intro: string }[]) ?? [];
   const map = new Map<string, string>();
   const taken = new Set<string>();
@@ -168,7 +175,7 @@ export function upgrade(raw: unknown): Content {
     map.set(sec.id, slug);
     return { slug, title: sec.title, intro: sec.intro ?? '', cover: '' };
   });
-  const galleries = ((doc.galleries as (Gallery & { section?: string })[]) ?? []).map(({ section, ...g }) => ({ ...g, album: map.get(section ?? '') ?? albums[0]?.slug ?? '' }));
+  const galleries = ((doc.galleries as (Gallery & { section?: string })[]) ?? []).map(({ section, ...g }) => ({ ...g, album: map.get(section ?? '') ?? albums[0]?.slug ?? '', parent: '' }));
   return { schema: 2, version: Number(doc.version) || 0, updatedAt: String(doc.updatedAt ?? ''), albums, galleries };
 }
 
@@ -176,7 +183,7 @@ export function upgrade(raw: unknown): Content {
 export function clean(input: unknown): Omit<Content, 'version' | 'updatedAt'> {
   const doc = input as Partial<Content>;
   if (!doc || !Array.isArray(doc.albums) || !Array.isArray(doc.galleries)) throw new Error('bad document');
-  if (doc.albums.length > 60 || doc.galleries.length > 400) throw new Error('too many items');
+  if (doc.albums.length > 60 || doc.galleries.length > 1500) throw new Error('too many items');
 
   const albumSlugs = new Set<string>();
   const rawAlbums = doc.albums.map((a) => {
@@ -186,6 +193,14 @@ export function clean(input: unknown): Omit<Content, 'version' | 'updatedAt'> {
     return { slug, title: str(a.title, 60) || 'Untitled album', intro: str(a.intro, 300), cover: str(a.cover, 60) };
   });
   if (!rawAlbums.length) throw new Error('at least one album');
+
+  // a sub gallery sits inside a gallery that is directly in an album, never deeper
+  const rawParent = new Map(doc.galleries.map((g) => [str(g?.slug, 60), str(g?.parent, 60)]));
+  const parentOf = (slug: string) => {
+    const p = rawParent.get(slug) ?? '';
+    return p && p !== slug && rawParent.get(p) === '' ? p : '';
+  };
+  const rawAlbumOf = new Map(doc.galleries.map((g) => [str(g?.slug, 60), albumSlugs.has(g?.album as string) ? (g.album as string) : rawAlbums[0].slug]));
 
   const slugs = new Set<string>();
   const galleries: Gallery[] = doc.galleries.map((g) => {
@@ -203,7 +218,8 @@ export function clean(input: unknown): Omit<Content, 'version' | 'updatedAt'> {
       if (!(w > 0 && h > 0 && w <= 10000 && h <= 10000)) throw new Error(`bad size for ${key}`);
       return { key, url: photoUrl(p.url), thumb: photoUrl(p.thumb), w, h, alt: str(p.alt, 250), caption: str(p.caption, 200) };
     });
-    const album = albumSlugs.has(g.album as string) ? (g.album as string) : rawAlbums[0].slug;
+    const parent = parentOf(slug);
+    const album = rawAlbumOf.get(parent || slug)!;
     const service = SERVICES.includes(g.service as Service) ? (g.service as Service) : 'events';
     const cover = keys.has(g.cover as string) ? (g.cover as string) : photos[0]?.key ?? '';
     const now = new Date().toISOString();
@@ -212,6 +228,7 @@ export function clean(input: unknown): Omit<Content, 'version' | 'updatedAt'> {
       title: str(g.title, 80) || 'Untitled gallery',
       kind: str(g.kind, 60),
       album,
+      parent,
       service,
       blurb: str(g.blurb, 400),
       visible: g.visible === true,
@@ -230,15 +247,20 @@ export function clean(input: unknown): Omit<Content, 'version' | 'updatedAt'> {
   return { schema: 2, albums, galleries };
 }
 
-/** What the public site is built from. */
+/** What the public site is built from. A sub gallery shows only while its
+    gallery does; a gallery with no photos of its own shows when it has a
+    sub gallery to open. */
 export function published(c: Content) {
+  const subOk = (g: Gallery) => g.parent && g.visible && g.photos.length > 0;
+  const topOk = new Set(c.galleries.filter((g) => !g.parent && g.visible && (g.photos.length > 0 || c.galleries.some((s) => s.parent === g.slug && subOk(s)))).map((g) => g.slug));
   const galleries = c.galleries
-    .filter((g) => g.visible && g.photos.length > 0)
-    .map(({ slug, title, kind, album, service, blurb, cover, photos }) => ({
+    .filter((g) => (g.parent ? subOk(g) && topOk.has(g.parent) : topOk.has(g.slug)))
+    .map(({ slug, title, kind, album, parent, service, blurb, cover, photos }) => ({
       slug,
       title,
       kind,
       album,
+      parent,
       service,
       blurb,
       cover,
@@ -248,7 +270,7 @@ export function published(c: Content) {
     .map((a) => {
       const inside = galleries.filter((g) => g.album === a.slug);
       if (!inside.length) return null;
-      const cover = inside.some((g) => g.photos.some((p) => p.key === a.cover)) ? a.cover : inside[0].cover;
+      const cover = inside.some((g) => g.photos.some((p) => p.key === a.cover)) ? a.cover : inside.find((g) => g.cover)!.cover;
       return { slug: a.slug, title: a.title, intro: a.intro, cover };
     })
     .filter((a): a is Album => a !== null);

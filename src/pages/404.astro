@@ -4,7 +4,7 @@ import PageHead from '../components/PageHead.astro';
 import CollectionCards from '../components/CollectionCards.astro';
 import SectionHead from '../components/SectionHead.astro';
 import Icon from '../components/Icon.astro';
-import { COLLECTIONS } from '../data/collections';
+import { GALLERIES } from '../data/collections';
 import { href } from '../lib/paths';
 ---
 
@@ -18,7 +18,7 @@ import { href } from '../lib/paths';
   <section class="band paper" aria-labelledby="look">
     <div class="wrap">
       <SectionHead id="look" eyebrow="Galleries" title="Start here." layout="left" />
-      <CollectionCards items={COLLECTIONS.slice(0, 6)} />
+      <CollectionCards items={GALLERIES.slice(0, 6)} />
     </div>
   </section>
 </Base>

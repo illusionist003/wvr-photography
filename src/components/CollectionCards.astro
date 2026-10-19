@@ -1,6 +1,6 @@
 ---
 /* Gallery cards: the cover photo, the title, what kind of work it is and how
-   many photos are inside. */
+   many sub galleries and photos are inside. */
 import Icon from './Icon.astro';
 import Photo from './Photo.astro';
 import { collectionPath, type Collection } from '../data/collections';
@@ -23,7 +23,8 @@ const { items, eagerFirst = false } = Astro.props;
           <span class="cc__body">
             <span class="cc__title h3">{c.title}</span>
             <span class="cc__meta fine">
-              {c.kind}, {c.photos.length} {c.photos.length === 1 ? 'photo' : 'photos'}
+              {c.kind}, {c.subs.length > 0 && `${c.subs.length} ${c.subs.length === 1 ? 'gallery' : 'galleries'}, `}
+              {c.photoCount} {c.photoCount === 1 ? 'photo' : 'photos'}
             </span>
           </span>
           <Icon name="arrow" class="cc__arrow" />

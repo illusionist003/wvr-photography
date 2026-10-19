@@ -14,7 +14,7 @@ import CollectionCards from '../components/CollectionCards.astro';
 import ServiceCards from '../components/ServiceCards.astro';
 import Icon from '../components/Icon.astro';
 import { SERVICES, type Service } from '../data/services';
-import { COLLECTIONS } from '../data/collections';
+import { GALLERIES } from '../data/collections';
 import { heroImage } from '../lib/hero';
 import { breadcrumbs, faqNode, serviceNode } from '../lib/schema';
 import { plain } from '../lib/rich';
@@ -29,7 +29,7 @@ const KIND = { events: 'Event', products: 'Product', portraits: 'Portrait or hea
 const FOCUS: Record<string, string> = { 'portrait-cowboy-hat': '50% 20%', 'sport-ring-faceoff': '50% 40%', 'sport-boxer-corner': '50% 30%', 'engaged-embrace': '50% 25%', 'portrait-friends-stairs': '50% 30%', 'product-coffee-display': '50% 55%' };
 const tiles = s.work.map((id) => ({ id, focus: FOCUS[id] }));
 // every published gallery of this kind of work, in the order Matthew keeps them in the studio
-const galleries = COLLECTIONS.filter((c) => c.service === s.id).slice(0, 6);
+const galleries = GALLERIES.filter((c) => c.service === s.id).slice(0, 6);
 ---
 
 <Base

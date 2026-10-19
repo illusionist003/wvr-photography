@@ -35,8 +35,9 @@ try {
   data = JSON.parse(readFileSync(OUT, 'utf8'));
 }
 
-// three layers: albums hold galleries, galleries hold photos. (A studio from
-// before albums sent flat "sections"; they read as albums of the same name.)
+// four layers: albums hold galleries, galleries hold photos and sub galleries,
+// sub galleries hold photos. (A studio from before albums sent flat
+// "sections"; they read as albums of the same name.)
 const slugify = (t) => t.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || 'album';
 if (!Array.isArray(data.albums)) {
   const map = new Map(data.sections.map((s) => [s.id, slugify(s.title)]));
@@ -47,6 +48,7 @@ if (!Array.isArray(data.albums)) {
 data.albums = data.albums.map((a) => ({ ...a, title: tidy(a.title), intro: tidy(a.intro) }));
 data.galleries = data.galleries.map((g) => ({
   ...g,
+  parent: g.parent || '',
   title: tidy(g.title),
   kind: tidy(g.kind),
   blurb: tidy(g.blurb),
