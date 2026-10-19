@@ -7,7 +7,8 @@
 # GITHUB_DISPATCH_TOKEN is set in the studio, a publish also starts this
 # workflow at once (workflow_dispatch).
 #
-# PREVIEW: served at https://nradachy-web.github.io/wvr-photography/ with
+# PREVIEW: served at https://<owner>.github.io/wvr-photography/ (owner is
+# illusionist003, Matthew's account, once he accepts the transfer) with
 # BASE_PATH set, so every page is noindex and robots.txt closes the site.
 # PRODUCTION (after the domain moves, see docs/LAUNCH.md): drop BASE_PATH,
 # set SITE_URL, add public/CNAME and the custom domain in Pages settings.
@@ -26,9 +27,11 @@ permissions:
   id-token: write
   actions: write
 
+# The preview address follows whoever owns the repository
+# (https://<owner>.github.io/<repo>/), so it stays right after a transfer.
 env:
-  BASE_PATH: /wvr-photography/
-  SITE_URL: https://nradachy-web.github.io/wvr-photography
+  BASE_PATH: /${{ github.event.repository.name }}/
+  SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
   GALLERY_API: https://wvr-admin.vercel.app/api/site
 
 jobs:
