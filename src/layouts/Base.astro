@@ -53,6 +53,12 @@ const fontCss = `
     <link rel="preload" href={fontUrl} as="font" type="font/woff2" crossorigin />
     {preloads.map((p) => <link rel="preload" as="image" imagesrcset={p.srcset} imagesizes={p.sizes} type={p.type} media={p.media} fetchpriority="high" />)}
     <style set:html={fontCss}></style>
+    <noscript>
+      <style is:inline>
+        form[data-form]:not([data-live]) .cf__send,
+        form[data-form]:not([data-live]) .cf__note { display: none }
+      </style>
+    </noscript>
 
     <link rel="icon" href={href('/favicon.ico')} sizes="48x48" />
     <link rel="icon" href={href('/favicon-32.png')} type="image/png" sizes="32x32" />

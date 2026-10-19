@@ -39,7 +39,7 @@ const home = (id: PhotoId) => COLLECTIONS.find((c) => c.photos.includes(id));
       return (
         <li class={`wm__tile wm__tile--${i + 1}`} style={t.focus ? `--focus:${t.focus}` : undefined}>
           {c ? (
-            <a href={href(collectionPath(c))} aria-label={`${t.label ?? p.caption}, from the ${c.title} gallery`}>
+            <a href={href(collectionPath(c))}>
               {body}
             </a>
           ) : (

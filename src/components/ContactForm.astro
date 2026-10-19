@@ -3,7 +3,8 @@
    - with a Web3Forms access key in FORM, it posts there and lands on
      /thank-you/ (also without script, as a plain form post);
    - without a key, it opens the visitor's email app with the request written
-     out to Matthew (also without script, as a mailto form).
+     out to Matthew. (Not as a mailto: form action: browsers treat that as an
+     insecure form target. Without script, a note points to phone and email.)
    Never point it at a key that has not delivered a real test message: a dead
    key still answers "success" and the lead is lost. */
 import Icon from './Icon.astro';
@@ -28,10 +29,19 @@ const KINDS = ['Event', 'Product', 'Portrait or headshot', 'Engagement or couple
   data-live={live ? '' : undefined}
   data-to={BRAND.email}
   data-thanks={href('/thank-you/')}
-  action={live ? 'https://api.web3forms.com/submit' : BRAND.emailHref}
+  data-endpoint={live ? 'https://api.web3forms.com/submit' : undefined}
+  action={live ? 'https://api.web3forms.com/submit' : undefined}
   method="post"
-  enctype={live ? undefined : 'text/plain'}
 >
+  {
+    !live && (
+      <noscript>
+        <p class="cf__status fine">
+          This form needs JavaScript to send. Call <a href={BRAND.phoneHref}>{BRAND.phone}</a> or email <a href={BRAND.emailHref}>{BRAND.email}</a> instead.
+        </p>
+      </noscript>
+    )
+  }
   {
     live && (
       <>
@@ -137,7 +147,7 @@ const KINDS = ['Event', 'Product', 'Portrait or headshot', 'Engagement or couple
         status.textContent = '';
         var data = new FormData(form);
         data.set('message', lines.join('\n'));
-        fetch(form.action, { method: 'POST', body: data, headers: { Accept: 'application/json' } })
+        fetch(form.getAttribute('data-endpoint'), { method: 'POST', body: data, headers: { Accept: 'application/json' } })
           .then(function (r) {
             return r.json().then(function (j) {
               if (!r.ok || !j.success) throw new Error(j.message || 'failed');
