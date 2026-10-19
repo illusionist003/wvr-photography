@@ -420,10 +420,24 @@ const link = (h: string) => (h.startsWith('#') ? h : href(h));
     color: var(--on-ink-muted);
   }
 
+  /* one line, always: when the slideshow controls appear beside it, a caption
+     that wrapped would push the whole page down (layout shift) */
   .hero__caption {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .hero__caption span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hero__ctl {
+    flex: none;
   }
 
   .hero__caption :global(svg) {
