@@ -33,6 +33,9 @@ export interface Collection {
   /** The gallery this sub gallery sits inside; empty for a gallery directly in its album. */
   parent: string;
   blurb: string;
+  /** When the shoot was, YYYY-MM-DD; empty when not given. */
+  date: string;
+  location: string;
   cover: GalleryPhoto;
   /** Its own photos; a gallery with sub galleries can have none. */
   photos: GalleryPhoto[];
@@ -61,6 +64,8 @@ interface RawGallery {
   parent?: string;
   service: ServiceId;
   blurb: string;
+  date?: string;
+  location?: string;
   cover: string;
   photos: RawPhoto[];
 }
@@ -79,6 +84,8 @@ export const COLLECTIONS: Collection[] = (data.galleries as RawGallery[]).map((g
     album: g.album,
     parent: g.parent ?? '',
     blurb: g.blurb,
+    date: g.date ?? '',
+    location: g.location ?? '',
     cover: photos.find((p) => p.key === g.cover) ?? photos[0],
     photos,
     subs: [],
@@ -129,5 +136,5 @@ export const galleryOf = (key: string) => COLLECTIONS.find((c) => c.photos.some(
 /** Every piece of text Matthew typed, for the house-style checks to skip. */
 export const USER_TEXT = [
   ...(data.albums as { title: string; intro: string }[]).flatMap((a) => [a.title, a.intro]),
-  ...COLLECTIONS.flatMap((c) => [c.title, c.kind, c.blurb, ...c.photos.flatMap((p) => [p.caption, p.alt])]),
+  ...COLLECTIONS.flatMap((c) => [c.title, c.kind, c.blurb, c.location, ...c.photos.flatMap((p) => [p.caption, p.alt])]),
 ].filter(Boolean);

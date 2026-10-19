@@ -32,6 +32,10 @@ export interface Gallery {
   parent: string;
   service: Service;
   blurb: string;
+  /** When the shoot was, YYYY-MM-DD; empty when not given. */
+  date: string;
+  /** Where the shoot was, as he types it; empty when not given. */
+  location: string;
   visible: boolean;
   cover: string;
   photos: Photo[];
@@ -132,6 +136,7 @@ async function pruneHistory() {
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const KEY = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 function str(v: unknown, max: number): string {
   return typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '';
@@ -163,7 +168,7 @@ export function upgrade(raw: unknown): Content {
   const doc = raw as Record<string, unknown> & { schema?: number };
   if (doc.schema === 2) {
     const c = doc as unknown as Content;
-    return { ...c, galleries: c.galleries.map((g) => ({ ...g, parent: g.parent ?? '' })) };
+    return { ...c, galleries: c.galleries.map((g) => ({ ...g, parent: g.parent ?? '', date: g.date ?? '', location: g.location ?? '' })) };
   }
   const sections = (doc.sections as { id: string; title: string; intro: string }[]) ?? [];
   const map = new Map<string, string>();
@@ -175,7 +180,7 @@ export function upgrade(raw: unknown): Content {
     map.set(sec.id, slug);
     return { slug, title: sec.title, intro: sec.intro ?? '', cover: '' };
   });
-  const galleries = ((doc.galleries as (Gallery & { section?: string })[]) ?? []).map(({ section, ...g }) => ({ ...g, album: map.get(section ?? '') ?? albums[0]?.slug ?? '', parent: '' }));
+  const galleries = ((doc.galleries as (Gallery & { section?: string })[]) ?? []).map(({ section, ...g }) => ({ ...g, album: map.get(section ?? '') ?? albums[0]?.slug ?? '', parent: '', date: '', location: '' }));
   return { schema: 2, version: Number(doc.version) || 0, updatedAt: String(doc.updatedAt ?? ''), albums, galleries };
 }
 
@@ -231,6 +236,8 @@ export function clean(input: unknown): Omit<Content, 'version' | 'updatedAt'> {
       parent,
       service,
       blurb: str(g.blurb, 400),
+      date: DATE.test(g.date as string) ? (g.date as string) : '',
+      location: str(g.location, 80),
       visible: g.visible === true,
       cover,
       photos,
@@ -255,7 +262,7 @@ export function published(c: Content) {
   const topOk = new Set(c.galleries.filter((g) => !g.parent && g.visible && (g.photos.length > 0 || c.galleries.some((s) => s.parent === g.slug && subOk(s)))).map((g) => g.slug));
   const galleries = c.galleries
     .filter((g) => (g.parent ? subOk(g) && topOk.has(g.parent) : topOk.has(g.slug)))
-    .map(({ slug, title, kind, album, parent, service, blurb, cover, photos }) => ({
+    .map(({ slug, title, kind, album, parent, service, blurb, date, location, cover, photos }) => ({
       slug,
       title,
       kind,
@@ -263,6 +270,8 @@ export function published(c: Content) {
       parent,
       service,
       blurb,
+      date,
+      location,
       cover,
       photos: photos.map(({ key, url, w, h, alt, caption }) => ({ key, url, w, h, alt, caption })),
     }));

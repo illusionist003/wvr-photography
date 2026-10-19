@@ -49,6 +49,8 @@ data.albums = data.albums.map((a) => ({ ...a, title: tidy(a.title), intro: tidy(
 data.galleries = data.galleries.map((g) => ({
   ...g,
   parent: g.parent || '',
+  date: g.date || '',
+  location: tidy(g.location),
   title: tidy(g.title),
   kind: tidy(g.kind),
   blurb: tidy(g.blurb),

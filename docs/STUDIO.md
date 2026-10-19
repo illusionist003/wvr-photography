@@ -3,32 +3,40 @@
 Matthew's login for managing galleries: **https://wvr-admin.vercel.app**
 (Vercel project `wvr-admin`, team `modern-apex`; code in `admin/`).
 
-## Four layers
+## The layers
 
-Albums hold galleries, a gallery holds photos and sub galleries, and sub
-galleries hold photos, in the studio and on the site:
+Like his old Wix portfolio (Gallery, then Wentworth, then "Winner's Circle One
+Day 7-25" with its photos), with albums on top: albums hold galleries,
+galleries hold the galleries inside them, and those hold the photos.
 
 - Studio: **Albums** list, tap an album to see its galleries and its details
-  (name, a line about it, cover, delete when empty), tap a gallery to see its
-  sub galleries and its photos, tap a sub gallery to see its photos. The back
+  (name, a line about it, cover, delete when empty), tap a gallery to see the
+  galleries inside it, tap one of those to see and add its photos. The back
   button always goes up one layer.
-- Sub galleries: **New sub gallery** on a gallery's screen, or turn photos into
-  sub galleries (tap a photo, **Make it a sub gallery**; or Select, pick
-  several, **Make sub galleries** for one each). The photo becomes the sub
-  gallery's cover and first photo, its caption the title; add more photos
-  inside. Sub galleries go one level deep only. **Inside** in a gallery's
-  details moves it into another gallery or back out to its album.
+- New galleries are made on the first two layers (**New gallery in this
+  album**, then **New gallery in Wentworth Real Estate**); photos are added on
+  the third. Creating a gallery in an album goes straight on to making the
+  first gallery inside it. One level of galleries inside galleries, no deeper.
+- A gallery from before this change can keep photos of its own, shown under
+  its galleries. Select them and tap **Make galleries** (or tap one photo,
+  **Make it its own gallery**) to give each photo its own gallery inside,
+  with the photo as cover and its caption as the title.
+- Each gallery has a **Project type**, **Date** and **Location** (all
+  optional), shown on its page the way the Wix project pages showed them.
+- **Inside** in a gallery's details moves it into another gallery or back out
+  to its album.
 - Site: the **Galleries** menu opens to every album with its galleries (a panel
   on desktop that opens on hover or with the arrow button, an accordion in the
   phone menu). `/portfolio/` lists the albums, `/portfolio/<album>/` lists that
-  album's galleries, `/portfolio-collections/<gallery>/` shows its sub
-  galleries as cards and then its photos, and a sub gallery has its own
-  `/portfolio-collections/<sub-gallery>/` page, with breadcrumbs Galleries /
-  album / gallery / sub gallery.
+  album's galleries, `/portfolio-collections/<gallery>/` shows the
+  galleries inside it as cards (then any photos of its own), and each of
+  those has its own `/portfolio-collections/<slug>/` page with its photos,
+  project type, date and location, and breadcrumbs Galleries / album /
+  gallery / inner gallery.
 - An album only appears on the site once it has a published gallery with photos
-  (or with a published sub gallery). A sub gallery only shows while its
-  gallery is published. A gallery cannot be deleted while it holds sub
-  galleries.
+  (or with a published gallery inside it). A gallery inside another only
+  shows while the outer one is published. A gallery cannot be deleted while
+  galleries sit inside it.
 - The three original groups (Businesses and events, Sports and action, People
   and places) became the first three albums.
 
@@ -48,7 +56,7 @@ galleries hold photos, in the studio and on the site:
 - Select several photos: move them or remove them together.
 - Create albums, rename them, write a line about them, pick the cover,
   reorder them, delete them once empty.
-- Reorder galleries within an album (and sub galleries within a gallery), move
+- Reorder galleries within an album (and the galleries inside a gallery), move
   a gallery to another album or into another gallery, publish or hide it,
   delete it.
 - Everything saves by itself. The header says when the website has caught up.

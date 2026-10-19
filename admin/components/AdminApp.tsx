@@ -1,9 +1,11 @@
 'use client';
 /* WVR Studio: the whole editor in one screen-at-a-time app, built for a phone
-   first. Four layers, the same as the website: albums, the galleries inside
-   each album, the sub galleries inside a gallery, and photos (a gallery can
-   hold photos and sub galleries side by side). Tap down through them; the
-   back button always goes up one layer. Everything saves by itself; the site
+   first. The same layers as the website, like his old Wix portfolio: albums
+   hold galleries (Wentworth Real Estate), galleries hold the galleries inside
+   them (Winner's Circle One Day 7-25), and those hold the photos. New
+   galleries are made on the first two layers, photos added on the third. (A
+   gallery from before can still hold photos of its own.) Tap down through
+   them; the back button always goes up one layer. Everything saves by itself; the site
    picks up published changes on its own. */
 import { upload } from '@vercel/blob/client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -28,6 +30,9 @@ interface Gallery {
   parent: string;
   service: Service;
   blurb: string;
+  /** YYYY-MM-DD or empty. */
+  date: string;
+  location: string;
   visible: boolean;
   cover: string;
   photos: Photo[];
@@ -106,7 +111,7 @@ export default function AdminApp({ site }: { site: string }) {
     if (!r.ok) return setLoadError('Could not load your galleries. Check the connection and try again.');
     const j = await r.json();
     const raw: Content = j.content ?? { schema: 2, version: 0, updatedAt: '', albums: [{ slug: 'work', title: 'Work', intro: '', cover: '' }], galleries: [] };
-    const c: Content = { ...raw, galleries: raw.galleries.map((g) => ({ ...g, parent: g.parent ?? '' })) };
+    const c: Content = { ...raw, galleries: raw.galleries.map((g) => ({ ...g, parent: g.parent ?? '', date: g.date ?? '', location: g.location ?? '' })) };
     contentRef.current = c;
     etagRef.current = j.etag;
     setContent(c);
@@ -288,6 +293,8 @@ export default function AdminApp({ site }: { site: string }) {
   const album = view.name === 'album' ? content?.albums.find((a) => a.slug === view.slug) : gallery ? content?.albums.find((a) => a.slug === gallery.album) : undefined;
   const parentGallery = gallery?.parent ? content?.galleries.find((g) => g.slug === gallery.parent) : undefined;
   const subs = gallery && content ? content.galleries.filter((g) => g.parent === gallery.slug) : [];
+  // photos go in the galleries inside a gallery; one from before can keep photos of its own
+  const takesPhotos = !!gallery && (!!gallery.parent || gallery.photos.length > 0);
   const sheetPhoto = gallery && sheet ? gallery.photos.find((p) => p.key === sheet) : undefined;
   const byAlbum = useMemo(() => {
     if (!content) return [];
@@ -354,7 +361,7 @@ export default function AdminApp({ site }: { site: string }) {
     if (!contentRef.current) return '';
     const slug = freeSlug(title, new Set(contentRef.current.galleries.map((g) => g.slug)));
     const now = new Date().toISOString();
-    const made: Gallery = { slug, title: title.trim(), kind: '', album: albumSlug, parent, service, blurb: '', visible: false, cover: '', photos: [], createdAt: now, updatedAt: now };
+    const made: Gallery = { slug, title: title.trim(), kind: '', album: albumSlug, parent, service, blurb: '', date: '', location: '', visible: false, cover: '', photos: [], createdAt: now, updatedAt: now };
     update((c) => ({ ...c, galleries: parent ? [...c.galleries, made] : [made, ...c.galleries] }));
     return slug;
   }
@@ -366,13 +373,13 @@ export default function AdminApp({ site }: { site: string }) {
     if (!c0 || !src || src.parent || !keys.length) return;
     const set = new Set(keys);
     const moving = src.photos.filter((p) => set.has(p.key));
-    if (!confirm(moving.length === 1 ? 'Turn this photo into a sub gallery? You can add more photos to it after.' : `Turn these ${moving.length} photos into ${moving.length} sub galleries, one each? You can add more photos to each after.`)) return;
+    if (!confirm(moving.length === 1 ? 'Turn this photo into its own gallery inside this one? You can add more photos to it after.' : `Turn these ${moving.length} photos into ${moving.length} galleries inside this one, one each? You can add more photos to each after.`)) return;
     const taken = new Set(c0.galleries.map((g) => g.slug));
     const now = new Date().toISOString();
     const n0 = c0.galleries.filter((g) => g.parent === from).length;
     const made: Gallery[] = moving.map((p, i) => {
       const title = p.caption || `${src.title} ${n0 + i + 1}`;
-      return { slug: freeSlug(title, taken), title, kind: src.kind, album: src.album, parent: from, service: src.service, blurb: '', visible: src.visible, cover: p.key, photos: [p], createdAt: now, updatedAt: now };
+      return { slug: freeSlug(title, taken), title, kind: src.kind, album: src.album, parent: from, service: src.service, blurb: '', date: src.date, location: src.location, visible: src.visible, cover: p.key, photos: [p], createdAt: now, updatedAt: now };
     });
     update((c) => ({
       ...c,
@@ -414,7 +421,7 @@ export default function AdminApp({ site }: { site: string }) {
     const c = contentRef.current;
     const g = c?.galleries.find((x) => x.slug === slug);
     if (!c || !g || c.galleries.some((x) => x.parent === slug)) return;
-    if (!confirm(`Delete the ${g.parent ? 'sub gallery' : 'gallery'} "${g.title}" and its ${g.photos.length} photos from the site? This cannot be undone here.`)) return;
+    if (!confirm(`Delete the gallery "${g.title}" and its ${g.photos.length} photos from the site? This cannot be undone here.`)) return;
     update((x) => ({ ...x, galleries: x.galleries.filter((y) => y.slug !== slug) }));
     setView(g.parent ? { name: 'gallery', slug: g.parent } : { name: 'album', slug: g.album });
   }
@@ -584,7 +591,7 @@ export default function AdminApp({ site }: { site: string }) {
           <div className="page__head">
             <h1>Albums</h1>
           </div>
-          <p className="muted small">Albums hold galleries, galleries hold photos and sub galleries, and sub galleries hold photos. The website's Galleries menu follows the same order.</p>
+          <p className="muted small">Albums hold galleries, galleries hold the galleries inside them, and those hold the photos. The website's Galleries menu follows the same order.</p>
           <ul className="rows">
             {byAlbum.map(({ album: a, galleries, photoCount, cover, live: on }, i) => (
               <li key={a.slug} className="row">
@@ -735,14 +742,14 @@ export default function AdminApp({ site }: { site: string }) {
         <main
           className={`page${dragOver ? ' is-drop' : ''}`}
           onDragOver={(e) => {
-            if (e.dataTransfer.types.includes('Files')) {
+            if (e.dataTransfer.types.includes('Files') && takesPhotos) {
               e.preventDefault();
               setDragOver(true);
             }
           }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => {
-            if (e.dataTransfer.files.length) {
+            if (e.dataTransfer.files.length && takesPhotos) {
               e.preventDefault();
               addFiles(gallery.slug, e.dataTransfer.files);
             }
@@ -764,7 +771,13 @@ export default function AdminApp({ site }: { site: string }) {
                 {gallery.visible ? (parentGallery && !parentGallery.visible ? `Shows once ${parentGallery.title} is published` : 'Showing on the website') : 'Hidden from the website'}
               </p>
               <p className="muted small">
-                {gallery.visible ? 'New photos and edits go live on their own in 5 to 15 minutes.' : gallery.photos.length || subs.length ? 'Ready when you are.' : 'Add photos, then publish.'}
+                {gallery.visible
+                  ? 'New photos and edits go live on their own in 5 to 15 minutes.'
+                  : gallery.photos.length || subs.length
+                    ? 'Ready when you are.'
+                    : gallery.parent
+                      ? 'Add photos, then publish.'
+                      : 'Add a gallery inside it, then publish.'}
               </p>
             </div>
             <button
@@ -780,14 +793,14 @@ export default function AdminApp({ site }: { site: string }) {
             <section className="subs">
               <div className="photos-head">
                 <h2>
-                  {subs.length} sub {subs.length === 1 ? 'gallery' : 'galleries'}
+                  {subs.length} {subs.length === 1 ? 'gallery' : 'galleries'} inside
                 </h2>
-                <button className="link" onClick={() => setCreating({ parent: gallery.slug })}>
-                  New sub gallery
-                </button>
               </div>
               {subs.length === 0 ? (
-                <p className="muted small">A sub gallery is a gallery inside this one, with photos of its own. Make one here, or tap a photo and choose Make it a sub gallery.</p>
+                <button className="empty" onClick={() => setCreating({ parent: gallery.slug })}>
+                  <strong>Add the first gallery inside</strong>
+                  <span className="muted small">One for each shoot or day, like “Winner's Circle One Day 7-25”. Its photos go inside it.</span>
+                </button>
               ) : (
                 <ul className="rows">
                   {subs.map((g, i) => {
@@ -821,90 +834,102 @@ export default function AdminApp({ site }: { site: string }) {
             </section>
           )}
 
-          <div className="photos-head">
-            <h2>
-              {gallery.photos.length} {gallery.photos.length === 1 ? 'photo' : 'photos'}
-            </h2>
-            {gallery.photos.length > 0 && (
-              <button
-                className="link"
-                onClick={() => {
-                  setSelecting(!selecting);
-                  setPicked(new Set());
-                }}
-              >
-                {selecting ? 'Done' : 'Select'}
-              </button>
-            )}
-          </div>
-
-          {selecting && (
-            <div className="selbar">
-              <button className="link" onClick={() => setPicked(picked.size === gallery.photos.length ? new Set() : new Set(gallery.photos.map((p) => p.key)))}>
-                {picked.size === gallery.photos.length ? 'Select none' : 'Select all'}
-              </button>
-              <span className="muted small">{picked.size} selected</span>
-              <select
-                aria-label="Move selected photos to another gallery"
-                value=""
-                disabled={!picked.size}
-                onChange={(e) => movePhotosTo(gallery.slug, e.target.value, [...picked])}
-              >
-                <option value="">Move to…</option>
-                <GalleryOptions albums={content.albums} galleries={content.galleries.filter((g) => g.slug !== gallery.slug)} />
-              </select>
-              {!gallery.parent && (
-                <button className="btn ghost small" disabled={!picked.size} onClick={() => photosToSubs(gallery.slug, [...picked])}>
-                  Make sub galleries
-                </button>
-              )}
-              <button className="btn danger small" disabled={!picked.size} onClick={() => removePhotos(gallery.slug, [...picked])}>
-                Remove
-              </button>
-            </div>
-          )}
-
-          {gallery.photos.length === 0 ? (
-            <button className="empty" onClick={() => pickFor(gallery.slug)}>
-              <strong>Add photos</strong>
-              <span className="muted small">Choose as many as you like. They upload in the background.</span>
-            </button>
-          ) : (
-            <ul className="grid">
-              {gallery.photos.map((p) => (
-                <li
-                  key={p.key}
-                  draggable={!selecting}
-                  onDragStart={() => (dragKey.current = p.key)}
-                  onDragOver={(e) => dragKey.current && e.preventDefault()}
-                  onDrop={(e) => {
-                    if (dragKey.current) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      dropPhoto(gallery.slug, p.key);
-                    }
-                  }}
-                >
+          {takesPhotos && (
+            <>
+              <div className="photos-head">
+                <h2>
+                  {gallery.photos.length} {gallery.photos.length === 1 ? 'photo' : 'photos'}
+                </h2>
+                {!gallery.parent && (
+                  <p className="muted small">Photos in this gallery itself. To put them into their own galleries, Select them and tap Make galleries.</p>
+                )}
+                {gallery.photos.length > 0 && (
                   <button
-                    className={`tile${picked.has(p.key) ? ' is-picked' : ''}`}
-                    aria-pressed={selecting ? picked.has(p.key) : undefined}
-                    aria-label={selecting ? `Select photo ${p.caption || p.key}` : `Edit photo ${p.caption || ''}`.trim()}
+                    className="link"
                     onClick={() => {
-                      if (!selecting) return setSheet(p.key);
-                      const next = new Set(picked);
-                      if (next.has(p.key)) next.delete(p.key);
-                      else next.add(p.key);
-                      setPicked(next);
+                      setSelecting(!selecting);
+                      setPicked(new Set());
                     }}
                   >
-                    <img src={p.thumb} alt="" loading="lazy" width={p.w > p.h ? 320 : 213} height={p.w > p.h ? 213 : 320} />
-                    {gallery.cover === p.key && <span className="tile__badge">Cover</span>}
-                    {p.caption && <span className="tile__cap">{p.caption}</span>}
-                    {selecting && <span className="tile__check" aria-hidden="true" />}
+                    {selecting ? 'Done' : 'Select'}
                   </button>
-                </li>
-              ))}
-            </ul>
+                )}
+              </div>
+
+              {selecting && (
+                <div className="selbar">
+                  <button className="link" onClick={() => setPicked(picked.size === gallery.photos.length ? new Set() : new Set(gallery.photos.map((p) => p.key)))}>
+                    {picked.size === gallery.photos.length ? 'Select none' : 'Select all'}
+                  </button>
+                  <span className="muted small">{picked.size} selected</span>
+                  <select
+                    aria-label="Move selected photos to another gallery"
+                    value=""
+                    disabled={!picked.size}
+                    onChange={(e) => movePhotosTo(gallery.slug, e.target.value, [...picked])}
+                  >
+                    <option value="">Move to…</option>
+                    <GalleryOptions albums={content.albums} galleries={content.galleries.filter((g) => g.slug !== gallery.slug)} />
+                  </select>
+                  {!gallery.parent && (
+                    <button className="btn ghost small" disabled={!picked.size} onClick={() => photosToSubs(gallery.slug, [...picked])}>
+                      Make galleries
+                    </button>
+                  )}
+                  <button className="btn danger small" disabled={!picked.size} onClick={() => removePhotos(gallery.slug, [...picked])}>
+                    Remove
+                  </button>
+                </div>
+              )}
+
+              {gallery.photos.length === 0 ? (
+                <button className="empty" onClick={() => pickFor(gallery.slug)}>
+                  <strong>Add photos</strong>
+                  <span className="muted small">Choose as many as you like. They upload in the background.</span>
+                </button>
+              ) : (
+                <ul className="grid">
+                  {gallery.photos.map((p) => (
+                    <li
+                      key={p.key}
+                      draggable={!selecting}
+                      onDragStart={() => (dragKey.current = p.key)}
+                      onDragOver={(e) => dragKey.current && e.preventDefault()}
+                      onDrop={(e) => {
+                        if (dragKey.current) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          dropPhoto(gallery.slug, p.key);
+                        }
+                      }}
+                    >
+                      <button
+                        className={`tile${picked.has(p.key) ? ' is-picked' : ''}`}
+                        aria-pressed={selecting ? picked.has(p.key) : undefined}
+                        aria-label={selecting ? `Select photo ${p.caption || p.key}` : `Edit photo ${p.caption || ''}`.trim()}
+                        onClick={() => {
+                          if (!selecting) return setSheet(p.key);
+                          const next = new Set(picked);
+                          if (next.has(p.key)) next.delete(p.key);
+                          else next.add(p.key);
+                          setPicked(next);
+                        }}
+                      >
+                        <img src={p.thumb} alt="" loading="lazy" width={p.w > p.h ? 320 : 213} height={p.w > p.h ? 213 : 320} />
+                        {gallery.cover === p.key && <span className="tile__badge">Cover</span>}
+                        {p.caption && <span className="tile__cap">{p.caption}</span>}
+                        {selecting && <span className="tile__check" aria-hidden="true" />}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!gallery.parent && (
+                <button className="link" onClick={() => pickFor(gallery.slug)}>
+                  Add more photos to this gallery itself
+                </button>
+              )}
+            </>
           )}
 
           <section className="details">
@@ -953,9 +978,19 @@ export default function AdminApp({ site }: { site: string }) {
               </label>
             </div>
             <label>
-              Short label <span className="muted">(optional, shown on the gallery card, like “Engagement session”)</span>
+              Project type <span className="muted">(optional, shown on the gallery card and page, like “Business conference”)</span>
               <input value={gallery.kind} maxLength={60} onChange={(e) => updateGallery(gallery.slug, (g) => ({ ...g, kind: e.target.value }))} />
             </label>
+            <div className="two">
+              <label>
+                Date <span className="muted">(optional)</span>
+                <input type="date" value={gallery.date} onChange={(e) => updateGallery(gallery.slug, (g) => ({ ...g, date: e.target.value }))} />
+              </label>
+              <label>
+                Location <span className="muted">(optional)</span>
+                <input value={gallery.location} maxLength={80} placeholder="e.g. Linden, MI" onChange={(e) => updateGallery(gallery.slug, (g) => ({ ...g, location: e.target.value }))} />
+              </label>
+            </div>
             <label>
               A sentence or two about this shoot <span className="muted">(optional)</span>
               <textarea rows={3} maxLength={400} value={gallery.blurb} onChange={(e) => updateGallery(gallery.slug, (g) => ({ ...g, blurb: e.target.value }))} />
@@ -964,14 +999,20 @@ export default function AdminApp({ site }: { site: string }) {
               Web address: {site.replace(/^https?:\/\//, '')}/portfolio-collections/{gallery.slug}/
             </p>
             <button className="link danger" disabled={subs.length > 0} onClick={() => deleteGallery(gallery.slug)}>
-              {subs.length > 0 ? 'To delete this gallery, move or delete its sub galleries first' : gallery.parent ? 'Delete this sub gallery' : 'Delete this gallery'}
+              {subs.length > 0 ? 'To delete this gallery, move or delete the galleries inside it first' : 'Delete this gallery'}
             </button>
           </section>
 
           <div className="dock">
-            <button className="btn primary block" onClick={() => pickFor(gallery.slug)}>
-              Add photos
-            </button>
+            {gallery.parent ? (
+              <button className="btn primary block" onClick={() => pickFor(gallery.slug)}>
+                Add photos
+              </button>
+            ) : (
+              <button className="btn primary block" onClick={() => setCreating({ parent: gallery.slug })}>
+                New gallery in {gallery.title}
+              </button>
+            )}
           </div>
         </main>
       )}
@@ -984,9 +1025,11 @@ export default function AdminApp({ site }: { site: string }) {
           onCancel={() => setCreating(false)}
           onCreate={(title, albumSlug, service) => {
             const slug = createGallery(title, albumSlug, service, creating.parent);
-            setCreating(false);
             setView({ name: 'gallery', slug });
-            pickFor(slug);
+            if (creating.parent) {
+              setCreating(false);
+              pickFor(slug);
+            } else setCreating({ parent: slug });
           }}
         />
       )}
@@ -1126,7 +1169,7 @@ function NewGallery({
           if (title.trim()) onCreate(title, albumSlug, service);
         }}
       >
-        <h2 id="ng-title">{parent ? `New sub gallery in ${parent.title}` : 'New gallery'}</h2>
+        <h2 id="ng-title">{parent ? `New gallery in ${parent.title}` : 'New gallery'}</h2>
         <label>
           Title
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={parent ? 'e.g. Gala night' : 'e.g. Smith family session'} maxLength={80} required autoFocus />
@@ -1155,13 +1198,15 @@ function NewGallery({
             </label>
           </div>
         )}
-        <p className="muted small">It starts hidden. Add photos, then tap Publish when it looks right.</p>
+        <p className="muted small">
+          {parent ? 'It starts hidden. Add photos, then tap Publish when it looks right.' : 'It starts hidden. Next, add the galleries inside it, like one for each shoot or day.'}
+        </p>
         <div className="sheet__actions">
           <button type="button" className="btn ghost" onClick={onCancel}>
             Cancel
           </button>
           <button type="submit" className="btn primary" disabled={!title.trim()}>
-            Create and add photos
+            {parent ? 'Create and add photos' : 'Create'}
           </button>
         </div>
       </form>
@@ -1224,7 +1269,7 @@ function PhotoSheet(props: {
           </select>
           {props.onMakeSub && (
             <button className="btn ghost small" onClick={props.onMakeSub}>
-              Make it a sub gallery
+              Make it its own gallery
             </button>
           )}
         </div>

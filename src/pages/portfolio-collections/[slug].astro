@@ -48,6 +48,14 @@ function clamp(text: string, max: number) {
   return `${cut.slice(0, cut.lastIndexOf(' ') > 40 ? cut.lastIndexOf(' ') : cut.length).replace(/[\s,.;:]+$/, '')}…`;
 }
 
+// the project details from the studio, like his Wix project pages: type of work, date, place
+const when = c.date ? new Date(`${c.date}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '';
+const facts = [
+  { label: 'Project type', value: c.kind },
+  { label: 'Date', value: when },
+  { label: 'Location', value: c.location },
+].filter((f) => f.value);
+
 const brand = ' | WVR Photography';
 const longTitle = `${c.title} Gallery${brand}`;
 const title = longTitle.length < 25 ? `${c.title} Gallery${brand}, Fenton MI` : longTitle.length <= 70 ? longTitle : `${clamp(c.title, 70 - brand.length)}${brand}`;
@@ -59,7 +67,20 @@ const description = clamp(lead.length >= 70 ? lead : `${lead} See the gallery an
 ---
 
 <Base title={title} description={description} path={path} schema={[breadcrumbs(crumbs)]}>
-  <PageHead user kicker={c.kind} title={c.title} lede={c.blurb || undefined} crumbs={crumbs} />
+  <PageHead user kicker={c.kind} title={c.title} lede={c.blurb || undefined} crumbs={crumbs}>
+    {
+      (c.date || c.location) && (
+        <dl class="facts fine rise d2">
+          {facts.map((f) => (
+            <div>
+              <dt>{f.label}</dt>
+              <dd>{f.label === 'Date' ? <time datetime={c.date}>{f.value}</time> : f.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )
+    }
+  </PageHead>
 
   {
     c.subs.length > 0 && (
@@ -107,6 +128,22 @@ const description = clamp(lead.length >= 70 ? lead : `${lead} See the gallery an
 </Base>
 
 <style>
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .facts dt {
+    color: var(--on-ink-muted);
+  }
+
+  .facts dd {
+    color: var(--on-ink);
+    font-weight: 600;
+  }
+
   .gal {
     padding-top: 0;
   }

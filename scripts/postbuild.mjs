@@ -21,7 +21,7 @@ const walk = (dir) =>
 const gallery = JSON.parse(readFileSync(new URL('../src/content/gallery.json', import.meta.url), 'utf8'));
 const USER_TEXT = [
   ...gallery.albums.flatMap((a) => [a.title, a.intro]),
-  ...gallery.galleries.flatMap((g) => [g.title, g.kind, g.blurb, ...g.photos.flatMap((p) => [p.caption, p.alt])]),
+  ...gallery.galleries.flatMap((g) => [g.title, g.kind, g.blurb, g.location, ...g.photos.flatMap((p) => [p.caption, p.alt])]),
 ]
   .filter((t) => t && t.length > 1)
   .sort((a, b) => b.length - a.length);
