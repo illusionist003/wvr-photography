@@ -1,0 +1,194 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import ServiceCards from '../components/ServiceCards.astro';
+import WorkMosaic from '../components/WorkMosaic.astro';
+import Reviews from '../components/Reviews.astro';
+import Steps from '../components/Steps.astro';
+import Faq from '../components/Faq.astro';
+import ContactBand from '../components/ContactBand.astro';
+import Photo from '../components/Photo.astro';
+import Icon from '../components/Icon.astro';
+import { BRAND } from '../data/site';
+import { service } from '../data/services';
+import type { PhotoId } from '../data/photos';
+import { heroImage } from '../lib/hero';
+import { href } from '../lib/paths';
+import { faqNode } from '../lib/schema';
+import { plain } from '../lib/rich';
+
+// The first photo is preloaded and measured; the rest crossfade in later.
+const HERO_SLIDES: PhotoId[] = ['event-mastermind-keynote', 'sport-gym-sparring', 'product-coffee-bags', 'portrait-couple-lake', 'event-mud-truck-smoke', 'event-gala-stage'];
+const hero = await heroImage(HERO_SLIDES[0]);
+const heroMore = await Promise.all(HERO_SLIDES.slice(1).map((id) => heroImage(id)));
+
+const WORK: { id: PhotoId; focus?: string }[] = [
+  { id: 'event-poolside-group' },
+  { id: 'sport-ring-faceoff', focus: '50% 40%' },
+  { id: 'product-crystal-hearts' },
+  { id: 'portrait-cowboy-hat', focus: '50% 22%' },
+  { id: 'auto-camaro-night' },
+  { id: 'engaged-ring-box', focus: '50% 45%' },
+  { id: 'portrait-graduate-gazebo' },
+];
+
+const FAQ = [
+  {
+    q: 'What do you photograph?',
+    a: `Mostly three things: [events](${service('events').path}) like conferences, galas, pop-ups and fight nights; [products](${service('products').path}) and storefronts for local businesses; and [portraits](${service('portraits').path}), from headshots to seniors, couples and families.`,
+  },
+  {
+    q: 'Where are you based? Do you travel?',
+    a: `I am based in ${BRAND.city}, ${BRAND.regionName}. Tell me where your shoot is and I will confirm travel in your free quote.`,
+  },
+  {
+    q: 'How much does a shoot cost?',
+    a: 'It depends on what you need: how long the event runs, how many products, or what kind of session. Tell me about it and I will send a free quote, with no pressure to book.',
+  },
+  {
+    q: 'How do I book?',
+    a: `Send the [form below](#quote), call or text [${BRAND.phone}](${BRAND.phoneHref}), or email [${BRAND.email}](${BRAND.emailHref}) with the date, the place and what you need. I will reply with a quote and a plan.`,
+  },
+  {
+    q: 'Where can I see more of your work?',
+    a: 'The [portfolio](/portfolio/) has every gallery, from mastermind events and product shoots to boxing, mud bogs and engagements. Newer work goes up on [Instagram](https://www.instagram.com/wvr.photography/) first.',
+  },
+];
+---
+
+<Base
+  title="WVR Photography | Event, Product & Portrait Photographer, Fenton MI"
+  description="Matthew Weaver photographs events, products and portraits for businesses and people around Fenton, Michigan. See the work and get a free quote."
+  path="/"
+  preloads={hero.preloads}
+  schema={[faqNode(FAQ, plain)]}
+>
+  <Hero
+    size="home"
+    image={hero}
+    slides={heroMore}
+    kicker="Event, product and portrait photography in Fenton, MI"
+    title="Photos that make your business look as good as it **is.**"
+    lede="I'm Matthew Weaver. I photograph events, products and people for businesses around Fenton, with clean light, real moments and plenty of keepers to choose from."
+    secondary={{ label: 'See the work', href: '/portfolio/' }}
+    proof={{ text: 'Photos all turned out great and he provided PLENTY of photos for us.', by: 'Christian Wentworth, Wentworth Real Estate' }}
+  />
+
+  <section class="band paper" aria-labelledby="what">
+    <div class="wrap">
+      <SectionHead
+        id="what"
+        eyebrow="What I photograph"
+        title="Events, products and portraits."
+        intro="Three kinds of work, one standard: show up prepared, stay easy to work with and deliver photos you are proud to put your name on."
+      />
+      <ServiceCards />
+    </div>
+  </section>
+
+  <section class="band ink" aria-labelledby="work">
+    <div class="wrap">
+      <SectionHead id="work" eyebrow="Recent work" title="A few favorites from the portfolio." intro="Mastermind days, fight nights, product shoots and portraits. Tap any photo to open its gallery." />
+      <WorkMosaic tiles={WORK} />
+      <p class="more">
+        <a class="btn ghost" href={href('/portfolio/')}>See the full portfolio<Icon name="arrow" class="arr" /></a>
+      </p>
+    </div>
+  </section>
+
+  <section class="band white" aria-labelledby="said">
+    <div class="wrap">
+      <SectionHead id="said" eyebrow="Kind words" title="What clients say." intro="From a real estate team, a crystal shop and a coffee pop-up, in their own words." />
+      <Reviews />
+    </div>
+  </section>
+
+  <section class="band ink about" aria-labelledby="meet">
+    <div class="wrap about__grid">
+      <div class="about__photos">
+        <Photo id="sport-boxer-walkout" ratio={4 / 5} focus="center" widths={[400, 640, 900]} sizes="(min-width: 56rem) 26vw, 50vw" class="frame about__a" />
+        <Photo id="product-crystal-shop" ratio={4 / 5} widths={[400, 640, 900]} sizes="(min-width: 56rem) 22vw, 50vw" class="frame about__b" />
+      </div>
+      <div class="about__copy">
+        <p class="eyebrow">Meet the photographer</p>
+        <h2 class="h2" id="meet">Hi, I'm Matthew.</h2>
+        <div class="prose lede">
+          <p>Photography found me through a local ministry. I started shooting for them, fell for it fast, and have not put the camera down since.</p>
+          <p>Since then I have served on my church's production team and photographed professional boxers, real estate teams, small shops and plenty of people in between. Every shoot gets the same care: on time, prepared, and easy to have in the room.</p>
+        </div>
+        <div class="actions">
+          <a class="btn primary" href="#quote">Get a free quote<Icon name="arrow" class="arr" /></a>
+          <a class="btn ghost" href={href('/about/')}>More about me</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band paper" aria-labelledby="how">
+    <div class="wrap">
+      <SectionHead id="how" eyebrow="How it works" title="Booking takes a few minutes." intro="Tell me what you need, get a free quote, and let me handle the rest." />
+      <Steps />
+    </div>
+  </section>
+
+  <section class="band white" aria-labelledby="faq">
+    <div class="wrap faq-wrap">
+      <SectionHead id="faq" eyebrow="Questions" title="Good to know." layout="left" />
+      <Faq items={FAQ} />
+    </div>
+  </section>
+
+  <ContactBand />
+</Base>
+
+<style>
+  .more {
+    display: flex;
+    justify-content: center;
+    margin-top: clamp(2rem, 4vw, 3rem);
+  }
+
+  .about__grid {
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 5rem);
+    align-items: center;
+  }
+
+  @media (min-width: 56rem) {
+    .about__grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  .about__photos {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 0.75rem;
+    align-items: end;
+  }
+
+  .about__photos :global(.about__a) {
+    aspect-ratio: 4 / 5;
+  }
+
+  .about__photos :global(.about__b) {
+    aspect-ratio: 4 / 5;
+    margin-bottom: 18%;
+  }
+
+  .about__copy {
+    display: grid;
+    gap: 1.1rem;
+    align-content: center;
+  }
+
+  .about__copy .actions {
+    margin-top: 0.75rem;
+  }
+
+  .faq-wrap {
+    max-width: 58rem;
+  }
+</style>

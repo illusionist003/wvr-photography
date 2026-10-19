@@ -1,0 +1,151 @@
+---
+/* Every selling page ends here: the form on a white card beside the ways to
+   reach Matthew directly. */
+import ContactForm from './ContactForm.astro';
+import Icon from './Icon.astro';
+import { BRAND, SOCIAL } from '../data/site';
+import { heading, rich } from '../lib/rich';
+
+interface Props {
+  title?: string;
+  intro?: string;
+  kind?: string;
+  /** The contact page owns the h1, so its band heading is an h2 all the same. */
+  id?: string;
+}
+const {
+  title = 'Tell me about your **shoot.**',
+  intro = 'Send a few details and I will get back to you with a free quote and a plan. No pressure, and no question is too small.',
+  kind,
+  id = 'quote',
+} = Astro.props;
+---
+
+<section class="cb ink band" id={id} aria-labelledby={`${id}-title`}>
+  <div class="wrap cb__grid">
+    <div class="cb__copy">
+      <p class="eyebrow">Get a free quote</p>
+      <h2 class="h2" id={`${id}-title`} set:html={heading(title)} />
+      <p class="lede" set:html={rich(intro)} />
+
+      <ul class="cb__ways">
+        <li>
+          <a href={BRAND.phoneHref}>
+            <Icon name="phone" />
+            <span>
+              <span class="cb__k">Call or text</span>
+              <span class="cb__v">{BRAND.phone}</span>
+            </span>
+          </a>
+        </li>
+        <li>
+          <a href={BRAND.emailHref}>
+            <Icon name="mail" />
+            <span>
+              <span class="cb__k">Email</span>
+              <span class="cb__v">{BRAND.email}</span>
+            </span>
+          </a>
+        </li>
+        <li>
+          <a href={SOCIAL.instagram} target="_blank" rel="noopener">
+            <Icon name="instagram" />
+            <span>
+              <span class="cb__k">Instagram</span>
+              <span class="cb__v">{SOCIAL.instagramHandle}</span>
+            </span>
+          </a>
+        </li>
+        <li class="cb__base">
+          <Icon name="pin" />
+          <span>
+            <span class="cb__k">Based in</span>
+            <span class="cb__v">{BRAND.city}, {BRAND.regionName}</span>
+          </span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="cb__card">
+      <ContactForm id={`${id}-form`} kind={kind} />
+    </div>
+  </div>
+</section>
+
+<style>
+  .cb__grid {
+    display: grid;
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: start;
+  }
+
+  @media (min-width: 62rem) {
+    .cb__grid {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    }
+
+    .cb__copy {
+      position: sticky;
+      top: calc(var(--header) + 2rem);
+    }
+  }
+
+  .cb__copy {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+  }
+
+  .cb__ways {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: 1rem;
+  }
+
+  .cb__ways a,
+  .cb__base {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-height: 3.5rem;
+    text-decoration: none;
+    word-break: break-word;
+  }
+
+  .cb__ways :global(svg) {
+    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0.7rem;
+    border: 1px solid var(--line-ink);
+    border-radius: 50%;
+    color: var(--teal-soft);
+    transition: border-color 0.2s var(--ease);
+  }
+
+  .cb__ways a:hover :global(svg) {
+    border-color: var(--teal-soft);
+  }
+
+  .cb__ways a:hover .cb__v {
+    text-decoration: underline;
+  }
+
+  .cb__k {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--on-ink-muted);
+  }
+
+  .cb__v {
+    display: block;
+    font-weight: 620;
+  }
+
+  .cb__card {
+    padding: clamp(1.25rem, 3vw, 2.25rem);
+    border-radius: calc(var(--r) + 4px);
+    background: var(--white);
+    color: var(--text);
+  }
+</style>

@@ -1,0 +1,61 @@
+---
+/* How booking works, in three steps. The only numbers on the site. */
+import { STEPS } from '../data/services';
+---
+
+<ol class="st">
+  {
+    STEPS.map((s, i) => (
+      <li>
+        <span class="st__n" aria-hidden="true">
+          {i + 1}
+        </span>
+        <h3 class="h3">{s.title}</h3>
+        <p class="muted">{s.body}</p>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .st {
+    display: grid;
+    gap: 2rem;
+    counter-reset: step;
+  }
+
+  @media (min-width: 52rem) {
+    .st {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(1.5rem, 3vw, 3rem);
+    }
+  }
+
+  .st li {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+
+  :global(.ink) .st li {
+    border-color: var(--line-ink);
+  }
+
+  .st__n {
+    font-size: clamp(2.75rem, 4vw, 3.75rem);
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--teal-ink);
+  }
+
+  :global(.ink) .st__n {
+    color: var(--teal-soft);
+  }
+
+  .st .h3 {
+    margin-top: 0.5rem;
+  }
+</style>

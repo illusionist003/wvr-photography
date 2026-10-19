@@ -1,0 +1,101 @@
+---
+/* Gallery cards: the cover photo, the title, what kind of work it is and how
+   many photos are inside. */
+import Icon from './Icon.astro';
+import Photo from './Photo.astro';
+import { collectionPath, type Collection } from '../data/collections';
+import { href } from '../lib/paths';
+
+interface Props {
+  items: Collection[];
+  /** Load the first card's photo at once (it is on the first screen). */
+  eagerFirst?: boolean;
+}
+const { items, eagerFirst = false } = Astro.props;
+---
+
+<ul class="cc">
+  {
+    items.map((c, i) => (
+      <li>
+        <a class="cc__card" href={href(collectionPath(c))}>
+          <Photo id={c.cover} ratio={4 / 3} eager={eagerFirst && i === 0} widths={[480, 720, 960]} sizes="(min-width: 64rem) 32vw, (min-width: 40rem) 50vw, 100vw" class="frame zoom cc__img" />
+          <span class="cc__body">
+            <span class="cc__title h3">{c.title}</span>
+            <span class="cc__meta fine">
+              {c.kind}, {c.photos.length} {c.photos.length === 1 ? 'photo' : 'photos'}
+            </span>
+          </span>
+          <Icon name="arrow" class="cc__arrow" />
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .cc {
+    display: grid;
+    gap: clamp(1.25rem, 2vw, 1.75rem) clamp(1rem, 2vw, 1.5rem);
+  }
+
+  @media (min-width: 40rem) {
+    .cc {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .cc {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .cc__card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.9rem 1rem;
+    align-items: start;
+    text-decoration: none;
+  }
+
+  .cc__card :global(.cc__img) {
+    grid-column: 1 / -1;
+    aspect-ratio: 4 / 3;
+  }
+
+  .cc__body {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .cc__meta {
+    color: var(--muted);
+  }
+
+  :global(.ink) .cc__meta {
+    color: var(--on-ink-muted);
+  }
+
+  .cc__card :global(.cc__arrow) {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.3rem;
+    color: var(--teal-ink);
+    transition: translate 0.22s var(--ease);
+  }
+
+  :global(.ink) .cc__card :global(.cc__arrow) {
+    color: var(--teal-soft);
+  }
+
+  .cc__card:hover :global(.cc__arrow) {
+    translate: 0.25rem 0;
+  }
+
+  .cc__card:hover .cc__title {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+</style>

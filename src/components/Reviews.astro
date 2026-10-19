@@ -1,0 +1,112 @@
+---
+/* What his clients said, word for word, with who said it and a link to the
+   gallery from that job. */
+import Icon from './Icon.astro';
+import { REVIEWS, type Review } from '../data/reviews';
+import { collection, collectionPath } from '../data/collections';
+import { href } from '../lib/paths';
+
+interface Props {
+  ids?: string[];
+}
+const { ids } = Astro.props;
+const list: Review[] = ids ? ids.map((id) => REVIEWS.find((r) => r.id === id)!).filter(Boolean) : REVIEWS;
+---
+
+<ul class:list={['rv', `rv--${list.length}`]}>
+  {
+    list.map((r) => (
+      <li>
+        <figure class="rv__card">
+          <Icon name="quote" class="rv__mark" />
+          <blockquote>
+            <p>{r.text}</p>
+          </blockquote>
+          <figcaption>
+            <span class="rv__name">{r.name}</span>
+            <span class="rv__biz muted">{r.business}</span>
+            {r.collection && (
+              <a class="arrow rv__link" href={href(collectionPath(collection(r.collection)))}>
+                <span>See the photos</span>
+                <Icon name="arrow" />
+              </a>
+            )}
+          </figcaption>
+        </figure>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .rv {
+    display: grid;
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  @media (min-width: 56rem) {
+    .rv--3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .rv--2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .rv__card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    height: 100%;
+    padding: clamp(1.5rem, 2.5vw, 2rem);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: var(--paper);
+  }
+
+  :global(.ink) .rv__card {
+    background: var(--ink-2);
+    border-color: var(--line-ink);
+  }
+
+  .rv__card :global(.rv__mark) {
+    width: 2rem;
+    height: 2rem;
+    color: var(--teal-ink);
+  }
+
+  :global(.ink) .rv__card :global(.rv__mark) {
+    color: var(--teal-soft);
+  }
+
+  blockquote {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+
+  figcaption {
+    display: grid;
+    gap: 0.1rem;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+
+  :global(.ink) figcaption {
+    border-color: var(--line-ink);
+  }
+
+  .rv__name {
+    font-weight: 660;
+  }
+
+  .rv__biz {
+    font-size: 0.9375rem;
+  }
+
+  .rv__link {
+    justify-self: start;
+    margin-top: 0.35rem;
+  }
+</style>

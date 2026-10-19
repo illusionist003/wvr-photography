@@ -1,0 +1,273 @@
+---
+/* The request form. Two ways out, both real:
+   - with a Web3Forms access key in FORM, it posts there and lands on
+     /thank-you/ (also without script, as a plain form post);
+   - without a key, it opens the visitor's email app with the request written
+     out to Matthew (also without script, as a mailto form).
+   Never point it at a key that has not delivered a real test message: a dead
+   key still answers "success" and the lead is lost. */
+import Icon from './Icon.astro';
+import { BRAND, FORM } from '../data/site';
+import { href } from '../lib/paths';
+
+interface Props {
+  id?: string;
+  /** Preselect the kind of shoot. */
+  kind?: string;
+}
+const { id = 'quote-form', kind = '' } = Astro.props;
+const live = FORM.web3formsKey.length > 0;
+const thanks = new URL(href('/thank-you/'), BRAND.origin).toString();
+const KINDS = ['Event', 'Product', 'Portrait or headshot', 'Engagement or couple', 'Something else'];
+---
+
+<form
+  class="cf"
+  id={id}
+  data-form
+  data-live={live ? '' : undefined}
+  data-to={BRAND.email}
+  data-thanks={href('/thank-you/')}
+  action={live ? 'https://api.web3forms.com/submit' : BRAND.emailHref}
+  method="post"
+  enctype={live ? undefined : 'text/plain'}
+>
+  {
+    live && (
+      <>
+        <input type="hidden" name="access_key" value={FORM.web3formsKey} />
+        <input type="hidden" name="subject" value={FORM.subject} />
+        <input type="hidden" name="from_name" value="wvrphotography.com" />
+        <input type="hidden" name="redirect" value={thanks} />
+        <input type="checkbox" name="botcheck" class="cf__trap" tabindex="-1" autocomplete="off" aria-hidden="true" />
+      </>
+    )
+  }
+
+  <div class="cf__row">
+    <div class="cf__field">
+      <label for={`${id}-name`}>Name</label>
+      <input id={`${id}-name`} name="name" type="text" autocomplete="name" required />
+    </div>
+    <div class="cf__field">
+      <label for={`${id}-email`}>Email</label>
+      <input id={`${id}-email`} name="email" type="email" autocomplete="email" required />
+    </div>
+  </div>
+
+  <div class="cf__row">
+    <div class="cf__field">
+      <label for={`${id}-phone`}>Phone <span class="cf__opt">(optional)</span></label>
+      <input id={`${id}-phone`} name="phone" type="tel" autocomplete="tel" inputmode="tel" />
+    </div>
+    <div class="cf__field">
+      <label for={`${id}-kind`}>What are we photographing?</label>
+      <select id={`${id}-kind`} name="shoot" required>
+        <option value="" disabled selected={!kind}>Choose one</option>
+        {KINDS.map((k) => <option selected={k === kind}>{k}</option>)}
+      </select>
+    </div>
+  </div>
+
+  <div class="cf__row">
+    <div class="cf__field">
+      <label for={`${id}-date`}>Date <span class="cf__opt">(if you have one)</span></label>
+      <input id={`${id}-date`} name="date" type="text" placeholder="e.g. Saturday, June 6" autocomplete="off" />
+    </div>
+    <div class="cf__field">
+      <label for={`${id}-where`}>Where <span class="cf__opt">(optional)</span></label>
+      <input id={`${id}-where`} name="location" type="text" placeholder="City or venue" autocomplete="off" />
+    </div>
+  </div>
+
+  <div class="cf__field">
+    <label for={`${id}-msg`}>Tell me about it</label>
+    <textarea id={`${id}-msg`} name="message" rows="4" required placeholder="What is happening, roughly how long, and what you will use the photos for."></textarea>
+  </div>
+
+  <button class="btn primary block cf__send" type="submit">
+    <span class="cf__label">Send my request</span>
+    <Icon name="arrow" class="arr" />
+  </button>
+
+  <p class="cf__status fine" role="status" aria-live="polite"></p>
+
+  <p class="cf__note fine">
+    {live ? 'Free quote, no pressure.' : 'Sending opens your email app with your request filled in.'} Rather talk? Call <a href={BRAND.phoneHref}>{BRAND.phone}</a>.
+  </p>
+</form>
+
+<script is:inline>
+  (function () {
+    document.querySelectorAll('form[data-form]').forEach(function (form) {
+      var status = form.querySelector('.cf__status');
+      var send = form.querySelector('.cf__send');
+      var label = form.querySelector('.cf__label');
+      var live = form.hasAttribute('data-live');
+
+      function value(name) {
+        var el = form.elements[name];
+        return el && el.value ? el.value.trim() : '';
+      }
+
+      form.addEventListener('submit', function (e) {
+        if (!form.checkValidity()) return;
+        e.preventDefault();
+        var lines = [
+          'Name: ' + value('name'),
+          'Email: ' + value('email'),
+          'Phone: ' + (value('phone') || 'not given'),
+          'Shoot: ' + value('shoot'),
+          'Date: ' + (value('date') || 'not set yet'),
+          'Where: ' + (value('location') || 'not given'),
+          '',
+          value('message'),
+        ];
+
+        if (!live) {
+          var subject = 'Photo request: ' + value('shoot') + ' (' + value('name') + ')';
+          var url = 'mailto:' + form.getAttribute('data-to') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(lines.join('\n'));
+          window.location.href = url;
+          status.textContent = 'Your email app should open with your request filled in. Press send there and it goes straight to Matthew. If nothing opened, email ' + form.getAttribute('data-to') + '.';
+          return;
+        }
+
+        send.disabled = true;
+        label.textContent = 'Sending…';
+        status.textContent = '';
+        var data = new FormData(form);
+        data.set('message', lines.join('\n'));
+        fetch(form.action, { method: 'POST', body: data, headers: { Accept: 'application/json' } })
+          .then(function (r) {
+            return r.json().then(function (j) {
+              if (!r.ok || !j.success) throw new Error(j.message || 'failed');
+            });
+          })
+          .then(function () {
+            window.location.href = form.getAttribute('data-thanks');
+          })
+          .catch(function () {
+            send.disabled = false;
+            label.textContent = 'Send my request';
+            status.textContent = 'That did not go through. Please call or email Matthew at ' + form.getAttribute('data-to') + ' and he will get right back to you.';
+          });
+      });
+    });
+  })();
+</script>
+
+<style>
+  .cf {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .cf__row {
+    display: grid;
+    gap: 1rem;
+  }
+
+  @media (min-width: 36rem) {
+    .cf__row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .cf__field {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .cf__opt {
+    font-weight: 450;
+    color: var(--muted);
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid #b9beb8;
+    border-radius: var(--r-sm);
+    background: var(--white);
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.4;
+    transition:
+      border-color 0.16s var(--ease),
+      box-shadow 0.16s var(--ease);
+  }
+
+  select {
+    appearance: none;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%23121617' stroke-width='1.6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.9rem center;
+  }
+
+  textarea {
+    min-height: 7.5rem;
+    resize: vertical;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #6b7577;
+  }
+
+  input:hover,
+  select:hover,
+  textarea:hover {
+    border-color: #8d9491;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgb(44 92 108 / 0.22);
+  }
+
+  .cf__send {
+    margin-top: 0.25rem;
+  }
+
+  .cf__send:disabled {
+    opacity: 0.7;
+    cursor: progress;
+  }
+
+  .cf__status:empty {
+    display: none;
+  }
+
+  .cf__status {
+    padding: 0.75rem 0.9rem;
+    border-radius: var(--r-sm);
+    background: #e8f0f1;
+    color: var(--text);
+  }
+
+  .cf__note {
+    color: var(--muted);
+  }
+
+  .cf__note a {
+    color: var(--teal-ink);
+    font-weight: 600;
+  }
+
+  .cf__trap {
+    position: absolute;
+    left: -9999px;
+  }
+</style>

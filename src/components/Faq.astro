@@ -1,0 +1,118 @@
+---
+/* Questions as native disclosures: they open, close and are findable in page
+   search without script. Each opens on its own. */
+import { rich } from '../lib/rich';
+
+interface Props {
+  items: { q: string; a: string }[];
+}
+const { items } = Astro.props;
+---
+
+<div class="faq">
+  {
+    items.map((item) => (
+      <details>
+        <summary>
+          <h3 class="faq__q">{item.q}</h3>
+          <span class="faq__mark" aria-hidden="true" />
+        </summary>
+        <div class="faq__a prose">
+          {item.a.split('\n\n').map((para) => (
+            <p set:html={rich(para)} />
+          ))}
+        </div>
+      </details>
+    ))
+  }
+</div>
+
+<style>
+  .faq {
+    border-top: 1px solid var(--line);
+  }
+
+  details {
+    border-bottom: 1px solid var(--line);
+  }
+
+  summary {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.3rem 0;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__q {
+    font-size: clamp(1.0625rem, 0.4vw + 1rem, 1.25rem);
+    font-weight: 620;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    transition: color 0.16s var(--ease);
+  }
+
+  summary:hover .faq__q {
+    color: var(--teal-ink);
+  }
+
+  .faq__mark {
+    position: relative;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    opacity: 0.6;
+  }
+
+  .faq__mark::before,
+  .faq__mark::after {
+    content: '';
+    position: absolute;
+    inset: 50% 26%;
+    height: 1.5px;
+    margin-top: -0.75px;
+    background: currentColor;
+    transition: rotate 0.25s var(--ease);
+  }
+
+  .faq__mark::after {
+    rotate: 90deg;
+  }
+
+  details[open] .faq__mark::after {
+    rotate: 0deg;
+  }
+
+  .faq__a {
+    max-width: 46rem;
+    padding: 0 0 1.5rem;
+    color: var(--muted);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (interpolate-size: allow-keywords) {
+      details {
+        interpolate-size: allow-keywords;
+      }
+
+      details::details-content {
+        block-size: 0;
+        overflow: clip;
+        transition:
+          block-size 0.3s var(--ease),
+          content-visibility 0.3s allow-discrete;
+      }
+
+      details[open]::details-content {
+        block-size: auto;
+      }
+    }
+  }
+</style>

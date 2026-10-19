@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import ContactBand from '../components/ContactBand.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Steps from '../components/Steps.astro';
+import { BRAND } from '../data/site';
+import { breadcrumbs } from '../lib/schema';
+---
+
+<Base
+  title="Contact WVR Photography | Free Quote, Fenton MI"
+  description="Contact Matthew Weaver at WVR Photography in Fenton, MI for event, product and portrait photography. Call (248) 759-1578 or send a request for a free quote."
+  path="/contact/"
+  schema={[breadcrumbs([{ name: 'Contact', path: '/contact/' }])]}
+>
+  <PageHead
+    kicker="Contact"
+    title="Let's plan your shoot."
+    lede={`Planning an event, need product photos or ready for a portrait session? Send a few details below, call or text [${BRAND.phone}](${BRAND.phoneHref}), or email [${BRAND.email}](${BRAND.emailHref}).`}
+    crumbs={[{ name: 'Contact', path: '/contact/' }]}
+  />
+
+  <ContactBand title="Send a **request.**" intro="The more you tell me, the better the quote. Dates, places and how you plan to use the photos all help." />
+
+  <section class="band paper" aria-labelledby="how">
+    <div class="wrap">
+      <SectionHead id="how" eyebrow="What happens next" title="Simple from here." layout="left" />
+      <Steps />
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,33 @@
+---
+/* Where a sent request lands. Not for search. */
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import CollectionCards from '../components/CollectionCards.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Icon from '../components/Icon.astro';
+import { BRAND } from '../data/site';
+import { COLLECTIONS } from '../data/collections';
+import { href } from '../lib/paths';
+---
+
+<Base title="Thanks, your request is in | WVR Photography" description="Thanks for reaching out to WVR Photography. Matthew will get back to you with a free quote. Browse the galleries in the meantime." path="/thank-you/" noindex bare quoteHref="/contact/">
+  <PageHead kicker="Request sent" title="Thanks, it's on its way." lede={`Matthew will get back to you with a free quote. Need him sooner? Call or text [${BRAND.phone}](${BRAND.phoneHref}).`}>
+    <p class="actions back">
+      <a class="btn primary" href={href('/portfolio/')}>Browse the galleries<Icon name="arrow" class="arr" /></a>
+      <a class="btn ghost" href={href('/')}>Back to home</a>
+    </p>
+  </PageHead>
+
+  <section class="band paper" aria-labelledby="look">
+    <div class="wrap">
+      <SectionHead id="look" eyebrow="While you wait" title="A few galleries." layout="left" />
+      <CollectionCards items={COLLECTIONS.slice(0, 3)} />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .back {
+    margin-top: 2rem;
+  }
+</style>

@@ -1,0 +1,78 @@
+---
+/* The portfolio, at the address his Wix site used (/portfolio). Galleries in
+   three groups, each card opening its own gallery page. */
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import CollectionCards from '../../components/CollectionCards.astro';
+import ContactBand from '../../components/ContactBand.astro';
+import { COLLECTIONS, GROUPS } from '../../data/collections';
+import { breadcrumbs } from '../../lib/schema';
+
+const total = COLLECTIONS.reduce((n, c) => n + c.photos.length, 0);
+---
+
+<Base
+  title="Portfolio | WVR Photography, Fenton MI Photographer"
+  description="Galleries from WVR Photography: mastermind events, a coffee pop-up, a crystal shop, boxing, mud bogs, cars, portraits and engagements around Fenton, MI."
+  path="/portfolio/"
+  schema={[breadcrumbs([{ name: 'Portfolio', path: '/portfolio/' }])]}
+>
+  <PageHead
+    kicker="Portfolio"
+    title="The work."
+    lede={`${COLLECTIONS.length} galleries and ${total} photos, all from real shoots: businesses and their events, sports and action, and people.`}
+    crumbs={[{ name: 'Portfolio', path: '/portfolio/' }]}
+  >
+    <nav class="jump" aria-label="Jump to a group">
+      <ul>
+        {
+          GROUPS.map((g) => (
+            <li>
+              <a href={`#${g.id}`}>{g.title}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </PageHead>
+
+  {
+    GROUPS.map((g, i) => (
+      <section class:list={['band', i % 2 === 0 ? 'paper' : 'white']} aria-labelledby={g.id}>
+        <div class="wrap">
+          <SectionHead id={g.id} title={g.title} intro={g.intro} />
+          <CollectionCards items={COLLECTIONS.filter((c) => c.group === g.id)} eagerFirst={i === 0} />
+        </div>
+      </section>
+    ))
+  }
+
+  <ContactBand title="Like what you see? Let's make **yours.**" />
+</Base>
+
+<style>
+  .jump ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 2rem;
+  }
+
+  .jump a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--line-ink);
+    border-radius: var(--r);
+    font-size: 0.9375rem;
+    font-weight: 560;
+    text-decoration: none;
+    transition: border-color 0.2s var(--ease);
+  }
+
+  .jump a:hover {
+    border-color: var(--teal-soft);
+  }
+</style>

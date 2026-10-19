@@ -1,0 +1,356 @@
+---
+/* Sticky header: his badge and name, the three kinds of work, the portfolio,
+   the phone number and one action. Below 72rem the links fold into a full
+   screen menu built on the native popover, so it opens, closes and handles
+   Escape without script. */
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+import { BRAND, QUOTE_CTA, SOCIAL } from '../data/site';
+import { SERVICES } from '../data/services';
+import { href } from '../lib/paths';
+
+interface Props {
+  quoteHref: string;
+  current: string;
+}
+const { quoteHref, current } = Astro.props;
+
+const links = [{ label: 'Portfolio', path: '/portfolio/' }, ...SERVICES.map((s) => ({ label: s.nav, path: s.path })), { label: 'About', path: '/about/' }];
+const quote = quoteHref.startsWith('#') ? quoteHref : href(quoteHref);
+const isCurrent = (p: string) => current === p || (p === '/portfolio/' && current.startsWith('/portfolio-collections/'));
+---
+
+<header class="hdr ink">
+  <div class="wrap hdr__row">
+    <a class="hdr__logo" href={href('/')} aria-label={`${BRAND.name}, home`}>
+      <Logo size={50} />
+    </a>
+
+    <nav class="hdr__nav" aria-label="Main">
+      <ul>
+        {
+          links.map((l) => (
+            <li>
+              <a href={href(l.path)} aria-current={isCurrent(l.path) ? 'page' : undefined}>
+                {l.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="hdr__end">
+      <a class="hdr__phone" href={BRAND.phoneHref}>
+        <Icon name="phone" />
+        <span>{BRAND.phone}</span>
+      </a>
+      <a class="btn primary small hdr__cta" href={quote}>{QUOTE_CTA}</a>
+      <button class="hdr__menu" type="button" popovertarget="menu" aria-label="Menu">
+        <Icon name="menu" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="menu" class="menu ink" popover role="dialog" aria-label="Site menu">
+  <div class="menu__top">
+    <a href={href('/')} aria-label={`${BRAND.name}, home`}>
+      <Logo size={44} lazy />
+    </a>
+    <button class="hdr__menu" type="button" popovertarget="menu" popovertargetaction="hide" aria-label="Close menu">
+      <Icon name="close" />
+    </button>
+  </div>
+  <nav class="menu__nav" aria-label="Menu">
+    <ul>
+      <li><a href={href('/')}>Home</a></li>
+      {links.map((l) => <li><a href={href(l.path)}>{l.label}</a></li>)}
+      <li><a href={href('/contact/')}>Contact</a></li>
+    </ul>
+  </nav>
+  <div class="menu__actions">
+    <a class="btn primary" href={href('/contact/')}>{QUOTE_CTA}</a>
+    <a class="btn ghost" href={BRAND.phoneHref}><Icon name="phone" />Call {BRAND.phone}</a>
+    <a class="btn ghost" href={BRAND.emailHref}><Icon name="mail" />Email Matthew</a>
+  </div>
+  <p class="menu__social">
+    <a href={SOCIAL.instagram} target="_blank" rel="noopener"><Icon name="instagram" />Instagram</a>
+    <a href={SOCIAL.facebook} target="_blank" rel="noopener"><Icon name="facebook" />Facebook</a>
+  </p>
+</div>
+
+<script is:inline>
+  /* While the menu is open, the page behind it cannot be reached by keyboard or
+     screen reader, and focus starts on the Close button. A link inside the menu
+     that points at this page's own #quote closes the menu first. */
+  (function () {
+    var menu = document.getElementById('menu');
+    if (!menu || !('popover' in HTMLElement.prototype)) return;
+    function rest(on) {
+      Array.prototype.forEach.call(document.body.children, function (el) {
+        if (el !== menu && el.tagName !== 'SCRIPT') el.inert = on;
+      });
+    }
+    menu.addEventListener('beforetoggle', function (e) {
+      rest(e.newState === 'open');
+    });
+    menu.addEventListener('toggle', function (e) {
+      if (e.newState === 'open') {
+        var close = menu.querySelector('[popovertargetaction="hide"]');
+        if (close) close.focus();
+      }
+    });
+  })();
+</script>
+
+<style>
+  .hdr {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid var(--line-ink);
+  }
+
+  .hdr__row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: var(--header);
+  }
+
+  .hdr__logo {
+    flex: none;
+    display: block;
+    text-decoration: none;
+  }
+
+  .hdr__nav {
+    display: none;
+    margin-inline: auto;
+  }
+
+  .hdr__nav ul {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .hdr__nav a {
+    position: relative;
+    display: block;
+    padding: 0.65rem 0.7rem;
+    font-size: 0.9688rem;
+    font-weight: 560;
+    text-decoration: none;
+    white-space: nowrap;
+    color: var(--on-ink);
+    transition: color 0.16s var(--ease);
+  }
+
+  .hdr__nav a::after {
+    content: '';
+    position: absolute;
+    left: 0.7rem;
+    right: 0.7rem;
+    bottom: 0.3rem;
+    height: 1.5px;
+    background: var(--teal-soft);
+    scale: 0 1;
+    transform-origin: left;
+    transition: scale 0.25s var(--ease);
+  }
+
+  .hdr__nav a:hover,
+  .hdr__nav a[aria-current='page'] {
+    color: var(--teal-soft);
+  }
+
+  .hdr__nav a:hover::after,
+  .hdr__nav a[aria-current='page']::after {
+    scale: 1 1;
+  }
+
+  .hdr__end {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+  }
+
+  .hdr__phone {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding-inline: 0.4rem;
+    font-weight: 620;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .hdr__phone:hover {
+    color: var(--teal-soft);
+  }
+
+  .hdr__phone :global(svg) {
+    flex: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--teal-soft);
+  }
+
+  .hdr__cta {
+    display: none;
+    white-space: nowrap;
+  }
+
+  .hdr__menu {
+    display: grid;
+    place-items: center;
+    width: 2.875rem;
+    height: 2.875rem;
+    margin-right: -0.5rem;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: none;
+    cursor: pointer;
+  }
+
+  /* the name beside the badge steps aside on the narrowest phones */
+  @media (max-width: 22.49rem) {
+    .hdr__logo :global(.logo__name) {
+      font-size: 1.0625rem;
+    }
+  }
+
+  @media (min-width: 40rem) {
+    .hdr__cta {
+      display: inline-flex;
+    }
+  }
+
+  @media (min-width: 56rem) {
+    .hdr__phone {
+      display: inline-flex;
+    }
+  }
+
+  @media (min-width: 72rem) {
+    .hdr__nav {
+      display: block;
+    }
+
+    .hdr__end {
+      margin-left: 0;
+    }
+
+    .hdr__menu {
+      display: none;
+    }
+  }
+
+  /* ----- the menu ----- */
+
+  .menu {
+    display: none;
+  }
+
+  @supports selector(:popover-open) {
+    .menu {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      max-height: none;
+      margin: 0;
+      padding: 0 var(--gutter) 2rem;
+      border: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      opacity: 0;
+      translate: 0 -0.75rem;
+      transition:
+        opacity 0.22s var(--ease),
+        translate 0.22s var(--ease),
+        overlay 0.22s allow-discrete,
+        display 0.22s allow-discrete;
+    }
+
+    .menu:popover-open {
+      display: block;
+      opacity: 1;
+      translate: 0 0;
+    }
+
+    @starting-style {
+      .menu:popover-open {
+        opacity: 0;
+        translate: 0 -0.75rem;
+      }
+    }
+  }
+
+  .menu__top {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: var(--header);
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--line-ink);
+    background: var(--ink);
+  }
+
+  .menu__top a {
+    text-decoration: none;
+  }
+
+  .menu__nav a {
+    display: block;
+    padding: 0.5rem 0;
+    font-size: clamp(1.625rem, 4vw, 2.25rem);
+    font-weight: 680;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+  }
+
+  .menu__nav a:hover {
+    color: var(--teal-soft);
+  }
+
+  .menu__actions {
+    display: grid;
+    gap: 0.6rem;
+    margin-top: 2rem;
+  }
+
+  .menu__social {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .menu__social a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    font-weight: 560;
+    text-decoration: none;
+    color: var(--on-ink-muted);
+  }
+
+  .menu__social :global(svg) {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  @media (min-width: 48rem) {
+    .menu__actions {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>

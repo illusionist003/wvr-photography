@@ -1,0 +1,148 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Reviews from '../components/Reviews.astro';
+import ServiceCards from '../components/ServiceCards.astro';
+import ContactBand from '../components/ContactBand.astro';
+import Photo from '../components/Photo.astro';
+import Icon from '../components/Icon.astro';
+import { BRAND } from '../data/site';
+import { breadcrumbs } from '../lib/schema';
+import { href } from '../lib/paths';
+
+const VALUES = [
+  { title: 'On time and prepared', body: 'I show up on time, know the plan and have a shot list ready, so your day runs on your schedule, not mine.' },
+  { title: 'Easy to have in the room', body: 'Guests, customers and nervous first-timers relax quickly. People in front of the camera should feel comfortable, not watched.' },
+  { title: 'Plenty to choose from', body: 'You get a full set of finished photos, edited with care, so you are never stuck with one usable shot.' },
+];
+---
+
+<Base
+  title="About Matthew Weaver | WVR Photography, Fenton MI"
+  description="Meet Matthew Weaver, the photographer behind WVR Photography in Fenton, MI: events, products and portraits, from a ministry start to boxing rings."
+  path="/about/"
+  schema={[breadcrumbs([{ name: 'About', path: '/about/' }])]}
+>
+  <PageHead kicker="About WVR Photography" title="Hi, I'm Matthew." lede={`I'm the owner and photographer behind ${BRAND.name}, based in ${BRAND.city}, ${BRAND.regionName}.`} crumbs={[{ name: 'About', path: '/about/' }]} />
+
+  <section class="band paper" aria-labelledby="story">
+    <div class="wrap story">
+      <div class="story__copy">
+        <p class="eyebrow">How it started</p>
+        <h2 class="h2" id="story">It started with a local ministry.</h2>
+        <div class="prose lede">
+          <p>I found photography by taking pictures for a local ministry in my area. It did not take long to fall in love with it.</p>
+          <p>I have since served on my church's production team and photographed professional boxers, real estate teams, coffee pop-ups, a crystal shop and a long list of portraits, engagements and family sessions.</p>
+          <p>Whatever the job, the goal is the same: deliver photos that leave a lasting impression, and make the whole thing easy for you along the way.</p>
+        </div>
+        <div class="actions">
+          <a class="btn primary" href="#quote">Get a free quote<Icon name="arrow" class="arr" /></a>
+          <a class="btn ghost" href={href('/portfolio/')}>See the work</a>
+        </div>
+      </div>
+      <div class="story__photos">
+        <Photo id="sport-boxer-corner" ratio={3 / 4} focus="top" eager widths={[400, 640, 900]} sizes="(min-width: 60rem) 24vw, 50vw" class="frame story__a" />
+        <Photo id="event-wine-room-greeting" ratio={3 / 4} widths={[400, 640, 900]} sizes="(min-width: 60rem) 24vw, 50vw" class="frame story__b" />
+      </div>
+    </div>
+  </section>
+
+  <section class="band ink" aria-labelledby="values">
+    <div class="wrap">
+      <SectionHead id="values" eyebrow="What you can count on" title="Three things on every shoot." layout="left" />
+      <ul class="values">
+        {
+          VALUES.map((v) => (
+            <li>
+              <Icon name="check" />
+              <h3 class="h3">{v.title}</h3>
+              <p class="muted">{v.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="band white" aria-labelledby="said">
+    <div class="wrap">
+      <SectionHead id="said" eyebrow="Kind words" title="What clients say." layout="left" />
+      <Reviews />
+    </div>
+  </section>
+
+  <section class="band paper" aria-labelledby="what">
+    <div class="wrap">
+      <SectionHead id="what" eyebrow="What I photograph" title="Events, products and portraits." layout="left" />
+      <ServiceCards />
+    </div>
+  </section>
+
+  <ContactBand />
+</Base>
+
+<style>
+  .story {
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 5rem);
+    align-items: center;
+  }
+
+  @media (min-width: 60rem) {
+    .story {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    }
+  }
+
+  .story__copy {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .story__copy .actions {
+    margin-top: 0.75rem;
+  }
+
+  .story__photos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .story__photos :global(.story__a),
+  .story__photos :global(.story__b) {
+    aspect-ratio: 3 / 4;
+  }
+
+  .story__photos :global(.story__b) {
+    margin-top: 22%;
+  }
+
+  .values {
+    display: grid;
+    gap: 2rem;
+  }
+
+  @media (min-width: 52rem) {
+    .values {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(1.5rem, 3vw, 3rem);
+    }
+  }
+
+  .values li {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line-ink);
+  }
+
+  .values :global(svg) {
+    width: 1.75rem;
+    height: 1.75rem;
+    color: var(--teal-soft);
+  }
+</style>

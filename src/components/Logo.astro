@@ -1,0 +1,57 @@
+---
+/* His badge, as a small WebP at 1x and 2x of the size it is shown at, beside
+   the name set in type (the name inside the badge is too small to read at
+   header size). */
+import { getImage } from 'astro:assets';
+import badge from '../assets/brand/logo-badge.png';
+import { BRAND } from '../data/site';
+
+interface Props {
+  /** Height of the badge in CSS pixels. */
+  size?: number;
+  name?: boolean;
+  lazy?: boolean;
+}
+const { size = 52, name = true, lazy = false } = Astro.props;
+const w = Math.round((size * badge.width) / badge.height);
+const [x1, x2] = await Promise.all([
+  getImage({ src: badge, width: w, format: 'webp', quality: 90 }),
+  getImage({ src: badge, width: w * 2, format: 'webp', quality: 86 }),
+]);
+---
+
+<span class="logo">
+  <img src={x1.src} srcset={`${x1.src} 1x, ${x2.src} 2x`} width={w} height={size} alt={name ? '' : `${BRAND.name} logo`} loading={lazy ? 'lazy' : 'eager'} decoding="async" />
+  {
+    name && (
+      <span class="logo__name">
+        <span class="logo__wvr">WVR</span> Photography
+      </span>
+    )
+  }
+</span>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .logo img {
+    flex: none;
+  }
+
+  .logo__name {
+    font-size: 1.1875rem;
+    font-weight: 560;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .logo__wvr {
+    font-weight: 760;
+    letter-spacing: 0.01em;
+  }
+</style>

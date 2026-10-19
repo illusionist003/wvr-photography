@@ -1,0 +1,528 @@
+---
+/* The first screen: one of his photos edge to edge, a scrim so the words read,
+   one heading, one paragraph, two actions and a line of proof.
+
+   The heading carries a plain keyword line above the display line. Both are
+   inside the h1, so the page says what it is about in words a search can read
+   while the big line stays short.
+
+   The page-load moment lives here: the photo settles and the words rise into
+   place. Transform only, so the photo and heading are painted from the first
+   frame (fading in from invisible would delay the largest paint).
+
+   Phones get a portrait cut of the photo (scripts/crops.mjs) instead of a
+   thin slice of the wide frame.
+
+   `slides` (home only) adds more photos that crossfade after the first. They
+   sit in a <template>, so nothing about them downloads with the page: they are
+   fetched on the visitor's first touch, scroll or key press, or four seconds
+   after the page has loaded. The first photo is the one that is preloaded and
+   measured. No slideshow when the visitor asks for reduced motion or for data
+   saving. A caption names what is in each photo. */
+import Icon from './Icon.astro';
+import { BRAND, QUOTE_CTA } from '../data/site';
+import { href } from '../lib/paths';
+import { heading, rich } from '../lib/rich';
+import { PHONE, WIDE, type HeroImage } from '../lib/hero';
+
+interface Props {
+  image: HeroImage;
+  slides?: HeroImage[];
+  kicker: string;
+  /** Display line. Wrap a phrase in ** to set it in the accent. */
+  title: string;
+  lede: string;
+  primary?: { label: string; href: string };
+  secondary?: { label: string; href: string };
+  proof?: { text: string; by: string };
+  size?: 'home' | 'page';
+  crumbs?: { name: string; path: string }[];
+}
+
+const { image, slides = [], kicker, title, lede, primary = { label: QUOTE_CTA, href: '#quote' }, secondary, proof, size = 'page', crumbs = [] } = Astro.props;
+const link = (h: string) => (h.startsWith('#') ? h : href(h));
+---
+
+<section class:list={['hero', 'ink', `hero--${size}`]}>
+  <div class="hero__media" data-slides={slides.length > 0 ? '' : undefined}>
+    <picture class="hero__slide is-on" data-caption={image.caption}>
+      {image.phone && <source media={PHONE} type="image/avif" srcset={image.phone.avif} sizes="100vw" />}
+      {image.phone && <source media={PHONE} type="image/webp" srcset={image.phone.webp} sizes="100vw" />}
+      <source media={image.phone ? WIDE : undefined} type="image/avif" srcset={image.wide.avif} sizes="100vw" />
+      <source media={image.phone ? WIDE : undefined} type="image/webp" srcset={image.wide.webp} sizes="100vw" />
+      <img src={image.fallback} width={image.width} height={image.height} alt={image.alt} loading="eager" decoding="sync" fetchpriority="high" />
+    </picture>
+    {
+      slides.length > 0 && (
+        <template>
+          {slides.map((s) => (
+            <picture class="hero__slide" aria-hidden="true" data-caption={s.caption}>
+              {s.phone && <source media={PHONE} type="image/avif" srcset={s.phone.avif} sizes="100vw" />}
+              {s.phone && <source media={PHONE} type="image/webp" srcset={s.phone.webp} sizes="100vw" />}
+              <source media={s.phone ? WIDE : undefined} type="image/avif" srcset={s.wide.avif} sizes="100vw" />
+              <source media={s.phone ? WIDE : undefined} type="image/webp" srcset={s.wide.webp} sizes="100vw" />
+              <img src={s.fallback} width={s.width} height={s.height} alt={s.alt} decoding="async" fetchpriority="low" />
+            </picture>
+          ))}
+        </template>
+      )
+    }
+  </div>
+
+  <div class="wrap hero__inner">
+    {
+      crumbs.length > 0 && (
+        <nav class="hero__crumbs fine" aria-label="Breadcrumb">
+          <ol>
+            <li>
+              <a href={href('/')}>Home</a>
+            </li>
+            {crumbs.map((c, i) => (
+              <li>{i === crumbs.length - 1 ? <span aria-current="page">{c.name}</span> : <a href={href(c.path)}>{c.name}</a>}</li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+
+    <h1 class="hero__h">
+      <span class="eyebrow hero__kicker rise">{kicker}</span>
+      <span class="sr">: </span>
+      <span class:list={['h1', size === 'page' && 'h1--page', 'rise', 'd1']} set:html={heading(title)} />
+    </h1>
+
+    <p class="lede hero__lede rise d2" set:html={rich(lede)} />
+
+    <div class="actions rise d3">
+      <a class="btn primary" href={link(primary.href)}>
+        {primary.label}
+        <Icon name="arrow" class="arr" />
+      </a>
+      {
+        secondary ? (
+          <a class="btn ghost" href={link(secondary.href)}>
+            {secondary.label}
+          </a>
+        ) : (
+          <a class="btn ghost" href={BRAND.phoneHref}>
+            <Icon name="phone" />
+            Call {BRAND.phone}
+          </a>
+        )
+      }
+    </div>
+
+    {
+      proof && (
+        <figure class="hero__proof small rise d4">
+          <blockquote>
+            <p>“{proof.text}”</p>
+          </blockquote>
+          <figcaption>{proof.by}</figcaption>
+        </figure>
+      )
+    }
+  </div>
+
+  <div class="hero__foot wrap fine">
+    <p class="hero__caption" aria-live="off">
+      <Icon name="camera" />
+      <span>{image.caption}</span>
+    </p>
+    {
+      slides.length > 0 && (
+        <div class="hero__ctl" hidden>
+          <ol class="hero__dots">
+            {[image, ...slides].map((s, i) => (
+              <li>
+                <button type="button" class="hero__dot" aria-label={`Photo ${i + 1} of ${slides.length + 1}: ${s.caption}`} aria-current={i === 0 ? 'true' : undefined} />
+              </li>
+            ))}
+          </ol>
+          <button type="button" class="hero__pause" aria-label="Pause the photos" aria-pressed="false">
+            <Icon name="pause" class="is-pause" />
+            <Icon name="play" class="is-play" />
+          </button>
+        </div>
+      )
+    }
+  </div>
+</section>
+
+{
+  slides.length > 0 && (
+    <script is:inline>
+      (function () {
+        var media = document.querySelector('.hero__media[data-slides]');
+        var tpl = media && media.querySelector('template');
+        var ctl = document.querySelector('.hero__ctl');
+        var cap = document.querySelector('.hero__caption span');
+        if (!tpl || !ctl) return;
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (navigator.connection && navigator.connection.saveData) return;
+
+        var HOLD = 5200;
+        var FADE = 1400;
+        var wake = ['pointerdown', 'touchstart', 'keydown', 'scroll', 'mousemove'];
+        var slides, dots, pause;
+        var at = 0;
+        var timer = 0;
+        var paused = false;
+        var inView = true;
+        var started = false;
+
+        function start() {
+          if (started) return;
+          started = true;
+          wake.forEach(function (e) {
+            removeEventListener(e, start);
+          });
+          media.classList.add('is-live');
+          media.insertBefore(tpl.content.cloneNode(true), tpl);
+          slides = Array.prototype.slice.call(media.querySelectorAll('.hero__slide'));
+          dots = Array.prototype.slice.call(ctl.querySelectorAll('.hero__dot'));
+          pause = ctl.querySelector('.hero__pause');
+          var next = slides[1].querySelector('img');
+          var ready = next.decode ? next.decode() : Promise.resolve();
+          ready.then(live, live);
+        }
+
+        function live() {
+          ctl.hidden = false;
+          dots.forEach(function (d, i) {
+            d.addEventListener('click', function () {
+              show(i);
+              plan();
+            });
+          });
+          pause.addEventListener('click', function () {
+            paused = !paused;
+            pause.setAttribute('aria-pressed', String(paused));
+            pause.setAttribute('aria-label', paused ? 'Play the photos' : 'Pause the photos');
+            plan();
+          });
+          document.addEventListener('visibilitychange', plan);
+          if ('IntersectionObserver' in window) {
+            new IntersectionObserver(function (es) {
+              inView = es[0].isIntersecting;
+              plan();
+            }).observe(media);
+          }
+          plan();
+        }
+
+        function show(i) {
+          if (i === at) return;
+          var el = slides[i];
+          media.insertBefore(el, tpl);
+          void el.offsetWidth;
+          el.classList.add('is-on');
+          el.removeAttribute('aria-hidden');
+          if (cap) cap.textContent = el.getAttribute('data-caption') || '';
+          at = i;
+          dots.forEach(function (d, k) {
+            if (k === i) d.setAttribute('aria-current', 'true');
+            else d.removeAttribute('aria-current');
+          });
+          setTimeout(function () {
+            slides.forEach(function (s, k) {
+              if (k !== at) {
+                s.classList.remove('is-on');
+                s.setAttribute('aria-hidden', 'true');
+              }
+            });
+          }, FADE);
+        }
+
+        function plan() {
+          clearTimeout(timer);
+          if (paused || !inView || document.hidden) return;
+          timer = setTimeout(function () {
+            show((at + 1) % slides.length);
+            plan();
+          }, HOLD);
+        }
+
+        wake.forEach(function (e) {
+          addEventListener(e, start, { passive: true });
+        });
+        function later() {
+          setTimeout(start, 4000);
+        }
+        if (document.readyState === 'complete') later();
+        else addEventListener('load', later);
+      })();
+    </script>
+  )
+}
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: min(82svh, 46rem);
+    overflow: clip;
+  }
+
+  .hero--home {
+    min-height: min(calc(100svh - var(--header)), 58rem);
+  }
+
+  @media (max-width: 47.99rem) {
+    .hero {
+      min-height: max(36rem, calc(92svh - var(--header)));
+    }
+
+    .hero--page {
+      min-height: max(34rem, calc(84svh - var(--header)));
+    }
+  }
+
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    overflow: hidden;
+    background: var(--ink-2);
+  }
+
+  .hero__media picture {
+    position: absolute;
+    inset: 0;
+  }
+
+  .hero__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* the scrim: dark where the words sit, clear where the photo speaks */
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(to top, rgb(10 13 14 / 0.97) 0%, rgb(10 13 14 / 0.92) 40%, rgb(10 13 14 / 0.78) 56%, rgb(10 13 14 / 0.3) 76%, rgb(10 13 14 / 0.1) 100%);
+  }
+
+  @media (min-width: 48rem) {
+    .hero::before {
+      background:
+        linear-gradient(to top, rgb(10 13 14 / 0.9) 0%, rgb(10 13 14 / 0.4) 40%, rgb(10 13 14 / 0) 70%),
+        linear-gradient(to right, rgb(10 13 14 / 0.9) 0%, rgb(10 13 14 / 0.72) 34%, rgb(10 13 14 / 0.25) 62%, rgb(10 13 14 / 0.1) 100%);
+    }
+  }
+
+  /* the settle: the photo eases from a touch larger to its place, once */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero__media > .hero__slide:first-child img {
+      animation: settle 2.2s var(--ease) both;
+    }
+  }
+
+  @keyframes settle {
+    from {
+      scale: 1.06;
+    }
+    to {
+      scale: 1;
+    }
+  }
+
+  .hero__inner {
+    position: relative;
+    padding-top: clamp(6rem, 18vh, 12rem);
+    padding-bottom: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .hero__h {
+    display: grid;
+    gap: 0.9rem;
+    max-width: 52rem;
+  }
+
+  .hero--page .hero__h {
+    max-width: 46rem;
+  }
+
+  .hero__kicker {
+    font-size: clamp(0.9375rem, 0.3vw + 0.875rem, 1.0625rem);
+  }
+
+  .hero__lede {
+    margin-top: 1.25rem;
+    color: rgb(242 244 243 / 0.86);
+  }
+
+  .hero .actions {
+    margin-top: 1.75rem;
+  }
+
+  /* on phones the proof waits for the reviews band, so the photo keeps the top of the screen */
+  @media (max-width: 47.99rem) {
+    .hero__proof {
+      display: none !important;
+    }
+  }
+
+  .hero__proof {
+    display: grid;
+    gap: 0.25rem;
+    max-width: 30rem;
+    margin-top: 1.75rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--teal-soft);
+  }
+
+  .hero__proof p {
+    color: var(--on-ink);
+  }
+
+  .hero__proof figcaption {
+    color: var(--on-ink-muted);
+  }
+
+  .hero__crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    margin-bottom: 1.25rem;
+    color: var(--on-ink-muted);
+  }
+
+  .hero__crumbs li + li::before {
+    content: '/';
+    margin-right: 0.5rem;
+    opacity: 0.6;
+  }
+
+  .hero__crumbs a {
+    color: var(--on-ink);
+    text-decoration: none;
+  }
+
+  .hero__crumbs a:hover {
+    text-decoration: underline;
+  }
+
+  .hero__foot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 3.5rem;
+    padding-bottom: 0.75rem;
+    color: var(--on-ink-muted);
+  }
+
+  .hero__caption {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .hero__caption :global(svg) {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* ----- the home slideshow ----- */
+
+  .hero__media.is-live .hero__slide {
+    opacity: 0;
+    transition: opacity 1.4s ease;
+  }
+
+  .hero__media.is-live .hero__slide.is-on {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero__media.is-live .hero__slide.is-on img {
+      animation: drift 9s linear both;
+    }
+  }
+
+  @keyframes drift {
+    from {
+      scale: 1.045;
+    }
+    to {
+      scale: 1;
+    }
+  }
+
+  .hero__ctl {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .hero__ctl[hidden] {
+    display: none;
+  }
+
+  .hero__dots {
+    display: flex;
+  }
+
+  .hero__dot,
+  .hero__pause {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  .hero__dot::before {
+    content: '';
+    width: 1.5rem;
+    height: 3px;
+    border-radius: 2px;
+    background: rgb(255 255 255 / 0.35);
+    transition: background-color 0.3s var(--ease);
+  }
+
+  .hero__dot:hover::before {
+    background: rgb(255 255 255 / 0.7);
+  }
+
+  .hero__dot[aria-current='true']::before {
+    background: var(--on-ink);
+  }
+
+  .hero__pause :global(svg) {
+    width: 1.15rem;
+    height: 1.15rem;
+    color: var(--on-ink);
+  }
+
+  .hero__pause :global(.is-play),
+  .hero__pause[aria-pressed='true'] :global(.is-pause) {
+    display: none;
+  }
+
+  .hero__pause[aria-pressed='true'] :global(.is-play) {
+    display: block;
+  }
+
+  @media (max-width: 47.99rem) {
+    .hero__dots li:nth-child(n) .hero__dot {
+      width: 2.25rem;
+    }
+
+    .hero__dot::before {
+      width: 1rem;
+    }
+  }
+</style>

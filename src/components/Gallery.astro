@@ -1,0 +1,54 @@
+---
+/* A gallery: his photos at their own shape, large, in two columns on wider
+   screens and one on phones, each with a short caption. No lightbox: the
+   photos are already shown big. The first two load at once (they are on the
+   first screen); the rest wait until they are near. */
+import Photo from './Photo.astro';
+import { photo, type PhotoId } from '../data/photos';
+
+interface Props {
+  photos: PhotoId[];
+}
+const { photos } = Astro.props;
+const single = photos.length === 1;
+---
+
+<ul class:list={['gl', single && 'gl--single']}>
+  {
+    photos.map((id, i) => (
+      <li>
+        <figure>
+          <Photo id={id} eager={i < 2} widths={[480, 800, 1200, 1600, 2000]} sizes={single ? '(min-width: 78rem) 74rem, 100vw' : '(min-width: 78rem) 37rem, (min-width: 48rem) 48vw, 100vw'} quality={66} class="frame gl__img" />
+          <figcaption class="fine">{photo(id).caption}</figcaption>
+        </figure>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .gl {
+    columns: 1;
+    column-gap: clamp(0.75rem, 1.5vw, 1.25rem);
+  }
+
+  @media (min-width: 48rem) {
+    .gl:not(.gl--single) {
+      columns: 2;
+    }
+  }
+
+  .gl li {
+    break-inside: avoid;
+    margin-bottom: clamp(1rem, 2vw, 1.75rem);
+  }
+
+  .gl figcaption {
+    margin-top: 0.6rem;
+    color: var(--muted);
+  }
+
+  :global(.ink) .gl figcaption {
+    color: var(--on-ink-muted);
+  }
+</style>

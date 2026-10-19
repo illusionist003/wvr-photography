@@ -1,0 +1,102 @@
+---
+/* The three kinds of work as cards on his photos. The whole card is the link. */
+import Icon from './Icon.astro';
+import Photo from './Photo.astro';
+import { SERVICES, type Service } from '../data/services';
+import { href } from '../lib/paths';
+
+interface Props {
+  skip?: Service['id'];
+}
+const { skip } = Astro.props;
+const list = SERVICES.filter((s) => s.id !== skip);
+---
+
+<ul class:list={['sc', list.length === 2 && 'sc--two']}>
+  {
+    list.map((s) => (
+      <li>
+        <a class="sc__card" href={href(s.path)}>
+          <Photo id={s.cardPhoto} ratio={4 / 5} focus={s.cardPhoto === 'portrait-cowboy-hat' ? 'top' : 'center'} widths={[400, 640, 900]} sizes="(min-width: 60rem) 30vw, (min-width: 40rem) 50vw, 100vw" class="frame zoom sc__img" />
+          <div class="sc__body">
+            <h3 class="h3">{s.name}</h3>
+            <p class="muted">{s.card}</p>
+            <span class="arrow">
+              <span>See {s.name.toLowerCase()}</span>
+              <Icon name="arrow" />
+            </span>
+          </div>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .sc {
+    display: grid;
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  @media (min-width: 40rem) {
+    .sc {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 60rem) {
+    .sc {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .sc--two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .sc__card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: calc(var(--r) + 4px);
+    background: var(--white);
+    text-decoration: none;
+    transition:
+      translate 0.3s var(--ease),
+      box-shadow 0.3s var(--ease),
+      border-color 0.3s var(--ease);
+  }
+
+  .sc__card:hover {
+    border-color: #c4c8c2;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .sc__card:hover {
+      translate: 0 -4px;
+    }
+  }
+
+  .sc__card :global(.sc__img) {
+    aspect-ratio: 4 / 5;
+  }
+
+  .sc__body {
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    flex: 1;
+    padding: 1.25rem 0.75rem 0.5rem;
+  }
+
+  .sc__body .arrow {
+    margin-top: auto;
+    padding-top: 0.25rem;
+  }
+
+  .sc__card:hover .arrow span {
+    text-decoration: underline;
+  }
+</style>

@@ -1,0 +1,167 @@
+---
+/* One template for the three service pages (event, product and portrait
+   photography). Built for a visitor arriving from a search or an ad: what it
+   is, the work, who said what, how it works, questions, the form. */
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import WorkMosaic from '../components/WorkMosaic.astro';
+import Reviews from '../components/Reviews.astro';
+import Steps from '../components/Steps.astro';
+import Faq from '../components/Faq.astro';
+import ContactBand from '../components/ContactBand.astro';
+import CollectionCards from '../components/CollectionCards.astro';
+import ServiceCards from '../components/ServiceCards.astro';
+import Icon from '../components/Icon.astro';
+import { SERVICES, type Service } from '../data/services';
+import { collection } from '../data/collections';
+import { heroImage } from '../lib/hero';
+import { breadcrumbs, faqNode, serviceNode } from '../lib/schema';
+import { plain } from '../lib/rich';
+
+export function getStaticPaths() {
+  return SERVICES.map((s) => ({ params: { service: s.path.replace(/\//g, '') }, props: { s } }));
+}
+
+const { s } = Astro.props as { s: Service };
+const hero = await heroImage(s.hero);
+const KIND = { events: 'Event', products: 'Product', portraits: 'Portrait or headshot' } as const;
+const FOCUS: Record<string, string> = { 'portrait-cowboy-hat': '50% 20%', 'sport-ring-faceoff': '50% 40%', 'sport-boxer-corner': '50% 30%', 'engaged-embrace': '50% 25%', 'portrait-friends-stairs': '50% 30%', 'product-coffee-display': '50% 55%' };
+const tiles = s.work.map((id) => ({ id, focus: FOCUS[id] }));
+---
+
+<Base
+  title={s.title}
+  description={s.description}
+  path={s.path}
+  preloads={hero.preloads}
+  schema={[serviceNode(s.name, s.path, s.description), breadcrumbs([{ name: s.name, path: s.path }]), faqNode(s.faq, plain)]}
+>
+  <Hero image={hero} kicker={s.kicker} title={s.heading} lede={s.lede} crumbs={[{ name: s.name, path: s.path }]} />
+
+  <section class="band paper" aria-labelledby="covers">
+    <div class="wrap covers">
+      <SectionHead id="covers" eyebrow={s.name} title={s.coversTitle} layout="left" />
+      <ul class="covers__list">
+        {
+          s.covers.map((c) => (
+            <li>
+              <Icon name="check" />
+              <div>
+                <h3 class="h3">{c.title}</h3>
+                <p class="muted">{c.body}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="band ink" aria-labelledby="work">
+    <div class="wrap">
+      <SectionHead id="work" eyebrow="The work" title="Recent work." intro="Every photo here is mine, from real shoots. Tap one to open its gallery." />
+      <WorkMosaic tiles={tiles} />
+    </div>
+  </section>
+
+  <section class="band white" aria-labelledby="said">
+    <div class="wrap">
+      <SectionHead id="said" eyebrow="Kind words" title="What clients say." layout="left" />
+      <Reviews ids={s.reviews} />
+    </div>
+  </section>
+
+  <section class="band paper" aria-labelledby="how">
+    <div class="wrap">
+      <SectionHead id="how" eyebrow="How it works" title="From first message to finished photos." layout="left" />
+      <Steps />
+      <p class="cta">
+        <a class="btn primary" href="#quote">Get a free quote<Icon name="arrow" class="arr" /></a>
+      </p>
+    </div>
+  </section>
+
+  <section class="band white" aria-labelledby="faq">
+    <div class="wrap faq-wrap">
+      <SectionHead id="faq" eyebrow="Questions" title={`About ${s.name.toLowerCase()}.`} layout="left" />
+      <Faq items={s.faq} />
+    </div>
+  </section>
+
+  <ContactBand kind={KIND[s.id]} />
+
+  <section class="band paper" aria-labelledby="galleries">
+    <div class="wrap">
+      <SectionHead id="galleries" eyebrow="Galleries" title="See more like this." layout="left" />
+      <CollectionCards items={s.collections.map(collection)} />
+    </div>
+  </section>
+
+  <section class="band white" aria-labelledby="also">
+    <div class="wrap">
+      <SectionHead id="also" eyebrow="Also photographed" title="Need something else?" layout="left" />
+      <ServiceCards skip={s.id} />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .covers {
+    display: grid;
+    gap: 0 clamp(2rem, 5vw, 5rem);
+  }
+
+  @media (min-width: 60rem) {
+    .covers {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+      align-items: start;
+    }
+
+    .covers :global(.head) {
+      position: sticky;
+      top: calc(var(--header) + 2rem);
+    }
+  }
+
+  .covers__list {
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (min-width: 40rem) {
+    .covers__list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 2rem;
+    }
+  }
+
+  .covers__list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    padding-block: 1.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .covers__list :global(svg) {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: 0.1rem;
+    color: var(--teal-ink);
+  }
+
+  .covers__list .h3 {
+    margin-bottom: 0.35rem;
+    font-size: 1.1875rem;
+  }
+
+  .cta {
+    margin-top: clamp(2rem, 4vw, 3rem);
+  }
+
+  .faq-wrap {
+    max-width: 58rem;
+  }
+</style>

@@ -1,0 +1,83 @@
+---
+/* The page shell. Everything a page needs to score: one inlined stylesheet,
+   one preloaded font, the hero photo preloaded, no blocking script. */
+import '../styles/global.css';
+import fontUrl from '../assets/fonts/InterTight.woff2?url';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import StickyBar from '../components/StickyBar.astro';
+import { BRAND } from '../data/site';
+import { href } from '../lib/paths';
+import { business, graph } from '../lib/schema';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Site-relative path of this page, with slashes: "/event-photography/". */
+  path: string;
+  /** Extra JSON-LD nodes for this page. */
+  schema?: object[];
+  /** The hero photo, so the browser starts on it before it parses the body. */
+  preloads?: { srcset: string; sizes: string; type: string; media?: string }[];
+  /** Where the "quote" actions go. Pages with a contact band use #quote. */
+  quoteHref?: string;
+  noindex?: boolean;
+  /** Hide the phone bar (thank-you, legal). */
+  bare?: boolean;
+}
+
+const { title, description, path, schema = [], preloads = [], quoteHref = '#quote', noindex = false, bare = false } = Astro.props;
+
+// A preview build (any base path) must never be indexed.
+const isPreview = import.meta.env.BASE_URL !== '/';
+const canonical = `${BRAND.origin}${path}`;
+const og = `${BRAND.origin}/og-image.jpg`;
+
+const fontCss = `
+@font-face{font-family:"Inter Tight";src:url(${fontUrl}) format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Inter Fallback";src:local("Arial"),local("Liberation Sans"),local("Helvetica Neue"),local("Roboto");size-adjust:98.5%;ascent-override:93%;descent-override:23%;line-gap-override:0%}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {path !== '/404/' && <link rel="canonical" href={canonical} />}
+    {(isPreview || noindex) && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="theme-color" content="#0a0d0e" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="preload" href={fontUrl} as="font" type="font/woff2" crossorigin />
+    {preloads.map((p) => <link rel="preload" as="image" imagesrcset={p.srcset} imagesizes={p.sizes} type={p.type} media={p.media} fetchpriority="high" />)}
+    <style set:html={fontCss}></style>
+
+    <link rel="icon" href={href('/favicon.ico')} sizes="48x48" />
+    <link rel="icon" href={href('/favicon-32.png')} type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href={href('/apple-touch-icon.png')} />
+    <link rel="manifest" href={href('/site.webmanifest')} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={BRAND.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={og} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json" set:html={graph([business(), ...schema])} />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to main content</a>
+    <Header quoteHref={quoteHref} current={path} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    {!bare && <StickyBar quoteHref={quoteHref} />}
+  </body>
+</html>

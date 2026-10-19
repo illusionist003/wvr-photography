@@ -1,0 +1,51 @@
+---
+/* A responsive photo: AVIF first, WebP behind it, JPEG last. Width and height
+   are always set, so nothing shifts while it loads. `ratio` crops to a fixed
+   frame (for cards); without it the photo keeps its own shape. */
+import { getImage } from 'astro:assets';
+import { photo, type PhotoId } from '../data/photos';
+
+interface Props {
+  id: PhotoId;
+  widths?: number[];
+  sizes?: string;
+  /** width / height, for a fixed crop. */
+  ratio?: number;
+  /** Where a fixed crop anchors. */
+  focus?: string;
+  alt?: string;
+  eager?: boolean;
+  class?: string;
+  quality?: number;
+}
+
+const { id, widths = [480, 800, 1200, 1600], sizes = '(min-width: 60rem) 50vw, 100vw', ratio, focus = 'center', alt, eager = false, class: cls, quality = 60 } = Astro.props;
+
+const p = photo(id);
+const r = ratio ?? p.src.width / p.src.height;
+// never ask for more pixels than the crop can give
+const maxW = Math.min(p.src.width, Math.floor(p.src.height * r));
+const usable = widths.filter((w) => w <= maxW);
+const list = usable.length ? usable : [maxW];
+
+async function set(format: 'avif' | 'webp', q: number) {
+  return Promise.all(
+    list.map(async (w) => {
+      const opts = ratio ? { width: w, height: Math.round(w / r), fit: 'cover' as const, position: focus } : { width: w };
+      const img = await getImage({ src: p.src, format, quality: q, ...opts });
+      return `${img.src} ${w}w`;
+    }),
+  );
+}
+
+const [avif, webp] = await Promise.all([set('avif', quality - 8), set('webp', quality + 6)]);
+const mid = list[Math.min(1, list.length - 1)];
+const fbOpts = ratio ? { width: mid, height: Math.round(mid / r), fit: 'cover' as const, position: focus } : { width: mid };
+const fallback = await getImage({ src: p.src, format: 'jpeg', quality: quality + 10, ...fbOpts });
+---
+
+<picture class={cls}>
+  <source type="image/avif" srcset={avif.join(', ')} sizes={sizes} />
+  <source type="image/webp" srcset={webp.join(', ')} sizes={sizes} />
+  <img src={fallback.src} width={mid} height={Math.round(mid / r)} alt={alt ?? p.alt} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : undefined} />
+</picture>

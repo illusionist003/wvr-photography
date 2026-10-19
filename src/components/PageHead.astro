@@ -1,0 +1,81 @@
+---
+/* The first screen of a page without a hero photo (portfolio, galleries,
+   contact, legal): breadcrumb, one heading, one line. Painted from text alone,
+   so the page's first photos can follow straight after it. */
+import { href } from '../lib/paths';
+import { heading, rich } from '../lib/rich';
+
+interface Props {
+  kicker?: string;
+  title: string;
+  lede?: string;
+  crumbs?: { name: string; path: string }[];
+}
+const { kicker, title, lede, crumbs = [] } = Astro.props;
+---
+
+<section class="ph ink">
+  <div class="wrap">
+    {
+      crumbs.length > 0 && (
+        <nav class="ph__crumbs fine" aria-label="Breadcrumb">
+          <ol>
+            <li>
+              <a href={href('/')}>Home</a>
+            </li>
+            {crumbs.map((c, i) => (
+              <li>{i === crumbs.length - 1 ? <span aria-current="page">{c.name}</span> : <a href={href(c.path)}>{c.name}</a>}</li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+    <h1 class="ph__h">
+      {kicker && <span class="eyebrow rise">{kicker}</span>}
+      {kicker && <span class="sr">: </span>}
+      <span class="h1 h1--page rise d1" set:html={heading(title)} />
+    </h1>
+    {lede && <p class="lede ph__lede rise d2" set:html={rich(lede)} />}
+    <slot />
+  </div>
+</section>
+
+<style>
+  .ph {
+    padding-block: clamp(2.5rem, 6vw, 5rem) clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .ph__crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--on-ink-muted);
+  }
+
+  .ph__crumbs li + li::before {
+    content: '/';
+    margin-right: 0.5rem;
+    opacity: 0.6;
+  }
+
+  .ph__crumbs a {
+    color: var(--on-ink);
+    text-decoration: none;
+  }
+
+  .ph__crumbs a:hover {
+    text-decoration: underline;
+  }
+
+  .ph__h {
+    display: grid;
+    gap: 0.9rem;
+    max-width: 50rem;
+  }
+
+  .ph__lede {
+    margin-top: 1.25rem;
+    max-width: 42rem;
+  }
+</style>

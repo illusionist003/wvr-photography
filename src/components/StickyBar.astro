@@ -1,0 +1,73 @@
+---
+/* Phones only: Call and the quote action stay within thumb reach. While the
+   form is on screen the bar steps away, so its button never sits under the
+   form's own. */
+import Icon from './Icon.astro';
+import { BRAND, QUOTE_CTA } from '../data/site';
+import { href } from '../lib/paths';
+
+interface Props {
+  quoteHref: string;
+}
+const { quoteHref } = Astro.props;
+const quote = quoteHref.startsWith('#') ? quoteHref : href(quoteHref);
+---
+
+<div class="bar ink" id="bar">
+  <a class="btn ghost" href={BRAND.phoneHref}><Icon name="phone" />Call</a>
+  <a class="btn primary" href={quote}>{QUOTE_CTA}</a>
+</div>
+
+<script is:inline>
+  (function () {
+    var bar = document.getElementById('bar');
+    var forms = document.querySelectorAll('[data-form]');
+    if (!bar || !forms.length || !('IntersectionObserver' in window)) return;
+    var showing = 0;
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          showing += e.isIntersecting ? 1 : e.target.__seen ? -1 : 0;
+          e.target.__seen = e.isIntersecting;
+        });
+        bar.classList.toggle('is-away', showing > 0);
+      },
+      { rootMargin: '-20% 0px -20% 0px' }
+    );
+    forms.forEach(function (f) {
+      io.observe(f);
+    });
+  })();
+</script>
+
+<style>
+  .bar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 0.6rem;
+    padding: 0.6rem var(--gutter) calc(0.6rem + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line-ink);
+    transition:
+      translate 0.25s var(--ease),
+      visibility 0.25s;
+  }
+
+  .bar.is-away {
+    translate: 0 110%;
+    visibility: hidden;
+  }
+
+  .bar .btn {
+    min-height: 3rem;
+    padding-block: 0.5rem;
+  }
+
+  @media (min-width: 48rem) {
+    .bar {
+      display: none;
+    }
+  }
+</style>

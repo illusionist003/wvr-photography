@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import CollectionCards from '../components/CollectionCards.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Icon from '../components/Icon.astro';
+import { COLLECTIONS } from '../data/collections';
+import { href } from '../lib/paths';
+---
+
+<Base title="Page not found | WVR Photography, Fenton MI" description="That page is not here. Head to the portfolio, the services or the contact page at WVR Photography, an event, product and portrait photographer in Fenton, MI." path="/404/" noindex quoteHref="/contact/">
+  <PageHead kicker="Page not found" title="That shot didn't make the gallery." lede="The page you were looking for is not here. Try one of these instead.">
+    <p class="actions back">
+      <a class="btn primary" href={href('/portfolio/')}>See the portfolio<Icon name="arrow" class="arr" /></a>
+      <a class="btn ghost" href={href('/')}>Go to home</a>
+    </p>
+  </PageHead>
+  <section class="band paper" aria-labelledby="look">
+    <div class="wrap">
+      <SectionHead id="look" eyebrow="Galleries" title="Start here." layout="left" />
+      <CollectionCards items={COLLECTIONS.slice(0, 6)} />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .back {
+    margin-top: 2rem;
+  }
+</style>

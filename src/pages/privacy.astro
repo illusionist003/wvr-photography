@@ -1,0 +1,56 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import { BRAND } from '../data/site';
+import { breadcrumbs } from '../lib/schema';
+
+const updated = 'October 18, 2026';
+---
+
+<Base
+  title="Privacy Policy | WVR Photography"
+  description="How WVR Photography handles the details you send through this website: what is collected, why, who sees it and how to ask for it to be deleted."
+  path="/privacy/"
+  bare
+  quoteHref="/contact/"
+  schema={[breadcrumbs([{ name: 'Privacy', path: '/privacy/' }])]}
+>
+  <PageHead kicker="Privacy" title="Privacy policy." lede={`Last updated ${updated}.`} crumbs={[{ name: 'Privacy', path: '/privacy/' }]} />
+
+  <section class="band white">
+    <div class="wrap legal prose">
+      <h2 class="h3">What this site collects</h2>
+      <p>When you send a request, you give us your name, email address and the details you type in: optionally a phone number, a date, a place and a message. That is all. The site does not use advertising trackers or analytics cookies.</p>
+
+      <h2 class="h3">How it is used</h2>
+      <p>Your details are used only to reply to you about your shoot: to answer questions, send a quote and plan the session. They are not sold, rented or shared for marketing.</p>
+
+      <h2 class="h3">How it is delivered</h2>
+      <p>Depending on how you send it, your request reaches {BRAND.owner} either as an email from your own email app or through a form delivery service that passes it on by email. Either way it is stored only in his email.</p>
+
+      <h2 class="h3">Photos</h2>
+      <p>The photos on this site are {BRAND.owner}'s work. If you appear in one and would like it taken down, ask and it will be removed.</p>
+
+      <h2 class="h3">Your choices</h2>
+      <p>To see, correct or delete what you have sent, email <a href={BRAND.emailHref}>{BRAND.email}</a> or call <a href={BRAND.phoneHref}>{BRAND.phone}</a>.</p>
+
+      <h2 class="h3">Links to other sites</h2>
+      <p>Links to Instagram and Facebook take you to those services, which have their own privacy policies.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .legal {
+    max-width: 46rem;
+  }
+
+  .legal h2 {
+    margin-top: 2.25rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .legal h2:first-child {
+    margin-top: 0;
+  }
+</style>

@@ -1,0 +1,531 @@
+/* ============================================================================
+   WVR PHOTOGRAPHY: THE SYSTEM
+
+   The photos are the design. Everything else gets out of their way.
+
+   Two planes. "Ink" is a darkroom: near black with a trace of his logo's lake
+   teal. "Paper" is a gallery wall: a soft neutral white. Bands alternate.
+   One accent, the teal from his logo badge, spent on actions and small marks.
+   One family, Inter Tight: heavy and tight for display, open for reading.
+   Sentence case everywhere. Radii stay small. No gradients as decoration
+   (the only gradients are scrims that keep words readable over a photo).
+   See docs/DESIGN.md.
+   ========================================================================== */
+
+:root {
+  --ink: #0a0d0e;
+  --ink-2: #111618;
+  --ink-3: #1a2124;
+  --line-ink: rgb(255 255 255 / 0.12);
+  --on-ink: #f2f4f3;
+  --on-ink-muted: #a9b4b6;
+
+  --paper: #f3f3ef;
+  --white: #fff;
+  --line: #dadcd7;
+  --text: #121617;
+  --muted: #4d585a;
+
+  --teal: #2c5c6c; /* the logo badge */
+  --teal-btn: #387787; /* white text sits on this at 5.1:1 */
+  --teal-btn-hover: #2c5c6c;
+  --teal-ink: #2c5c6c; /* teal text on paper, 6.9:1 */
+  --teal-soft: #8fc3d1; /* teal text on ink */
+
+  --font: 'Inter Tight', 'Inter Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+
+  --wrap: 78rem;
+  --gutter: clamp(1rem, 4.2vw, 2.75rem);
+  --band: clamp(4rem, 8.5vw, 7.5rem);
+  --r: 6px;
+  --r-sm: 4px;
+  --header: 4.5rem;
+  --ease: cubic-bezier(0.22, 0.8, 0.26, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header) + 1rem);
+  background: var(--ink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* on phones a bar is fixed to the bottom: keep focused things clear of it */
+@media (max-width: 47.99rem) {
+  html {
+    scroll-padding-bottom: 5.5rem;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  letter-spacing: 0.003em;
+  color: var(--text);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+picture,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+dl,
+dd,
+figure,
+blockquote {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.ink :focus-visible,
+.ink:focus-visible {
+  outline-color: var(--teal-soft);
+}
+
+::selection {
+  background: var(--teal-btn);
+  color: #fff;
+}
+
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  background: var(--white);
+  color: var(--text);
+  border-radius: var(--r-sm);
+  font-weight: 650;
+}
+
+.skip:focus {
+  top: 1rem;
+}
+
+/* Links that leave for another tab say so to a screen reader. */
+a[target='_blank']::after {
+  content: ' (opens in a new tab)';
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.nw {
+  white-space: nowrap;
+}
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- type ---------- */
+
+h1,
+h2 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.h1 {
+  display: block;
+  font-size: clamp(2.5rem, 4.4vw + 1rem, 5.25rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.h1--page {
+  font-size: clamp(2.25rem, 3.6vw + 1rem, 4.25rem);
+  line-height: 1.03;
+}
+
+.h2 {
+  font-size: clamp(2rem, 2.9vw + 1rem, 3.5rem);
+  font-weight: 690;
+  line-height: 1.05;
+  letter-spacing: -0.028em;
+}
+
+.h3 {
+  font-size: clamp(1.25rem, 0.6vw + 1.05rem, 1.5rem);
+  font-weight: 660;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.accent {
+  color: var(--teal-ink);
+}
+
+.ink .accent {
+  color: var(--teal-soft);
+}
+
+.eyebrow {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 620;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--teal-ink);
+}
+
+.ink .eyebrow {
+  color: var(--teal-soft);
+}
+
+.lede {
+  font-size: clamp(1.0625rem, 0.35vw + 1rem, 1.25rem);
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 38rem;
+}
+
+.ink .lede {
+  color: var(--on-ink-muted);
+}
+
+.small {
+  font-size: 0.9375rem;
+}
+
+.fine {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.ink .muted {
+  color: var(--on-ink-muted);
+}
+
+.prose p + p {
+  margin-top: 1em;
+}
+
+.prose a {
+  color: var(--teal-ink);
+  font-weight: 560;
+}
+
+.ink .prose a {
+  color: var(--teal-soft);
+}
+
+/* ---------- layout ---------- */
+
+.wrap {
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.band {
+  padding-block: var(--band);
+}
+
+.band--tight {
+  padding-block: clamp(3rem, 6vw, 5rem);
+}
+
+.ink {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.ink-2 {
+  background: var(--ink-2);
+}
+
+.paper {
+  background: var(--paper);
+  color: var(--text);
+}
+
+.white {
+  background: var(--white);
+  color: var(--text);
+}
+
+/* a band heading: label, h2 and an optional line beside it */
+.head {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: clamp(2rem, 4vw, 3.25rem);
+}
+
+.head.center {
+  justify-items: center;
+  text-align: center;
+}
+
+.head.center .lede {
+  margin-inline: auto;
+}
+
+@media (min-width: 60rem) {
+  .head.split {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    column-gap: 4rem;
+    align-items: end;
+  }
+
+  .head.split .eyebrow {
+    grid-column: 1 / -1;
+  }
+
+  .head.split .lede {
+    justify-self: end;
+  }
+}
+
+/* ---------- actions ---------- */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 3.125rem;
+  padding: 0.6rem 1.4rem;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  font-size: 1rem;
+  font-weight: 620;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.18s var(--ease),
+    border-color 0.18s var(--ease),
+    color 0.18s var(--ease),
+    translate 0.18s var(--ease);
+}
+
+.btn svg {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.btn.primary {
+  background: var(--teal-btn);
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: var(--teal-btn-hover);
+}
+
+.ink .btn.primary:hover {
+  background: #44889a;
+  color: #fff;
+}
+
+/* the arrow on a primary action nudges forward on hover */
+.btn .arr {
+  transition: translate 0.22s var(--ease);
+}
+
+.btn:hover .arr {
+  translate: 0.2rem 0;
+}
+
+.btn.ghost {
+  border-color: rgb(18 22 23 / 0.28);
+  color: var(--text);
+  background: transparent;
+}
+
+.btn.ghost:hover {
+  border-color: var(--text);
+}
+
+.ink .btn.ghost {
+  border-color: rgb(255 255 255 / 0.32);
+  color: var(--on-ink);
+}
+
+.ink .btn.ghost:hover {
+  border-color: var(--on-ink);
+  background: rgb(255 255 255 / 0.06);
+}
+
+.btn.small {
+  min-height: 2.75rem;
+  padding-inline: 1.1rem;
+  font-size: 0.9375rem;
+}
+
+.btn.block {
+  width: 100%;
+}
+
+/* a text link with an arrow */
+.arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  font-weight: 620;
+  color: var(--teal-ink);
+  text-decoration: none;
+}
+
+.ink .arrow {
+  color: var(--teal-soft);
+}
+
+.arrow svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  transition: translate 0.22s var(--ease);
+}
+
+.arrow:hover svg,
+a:hover .arrow svg {
+  translate: 0.25rem 0;
+}
+
+.arrow:hover span {
+  text-decoration: underline;
+}
+
+/* ---------- photos ---------- */
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r);
+  background: var(--ink-3);
+}
+
+.frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .zoom img {
+    transition: scale 0.7s var(--ease);
+  }
+
+  a:hover > .zoom img,
+  a:hover .zoom img,
+  .zoom:hover img {
+    scale: 1.035;
+  }
+}
+
+/* ---------- motion ---------- */
+
+/* the one page-load moment: transform only, so everything is painted from the first frame */
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 0.8s var(--ease) both;
+  }
+
+  .rise.d1 {
+    animation-delay: 0.06s;
+  }
+
+  .rise.d2 {
+    animation-delay: 0.14s;
+  }
+
+  .rise.d3 {
+    animation-delay: 0.22s;
+  }
+
+  .rise.d4 {
+    animation-delay: 0.3s;
+  }
+}
+
+@keyframes rise {
+  from {
+    translate: 0 0.9rem;
+  }
+  to {
+    translate: 0 0;
+  }
+}

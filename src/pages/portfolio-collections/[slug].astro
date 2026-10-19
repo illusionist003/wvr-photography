@@ -1,0 +1,87 @@
+---
+/* One gallery, at the address his Wix site used
+   (/portfolio-collections/<slug>). The photos come straight after a short
+   heading; then the review from that client, if there is one, the way to book
+   the same kind of shoot, and the neighbouring galleries. */
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import Gallery from '../../components/Gallery.astro';
+import Reviews from '../../components/Reviews.astro';
+import SectionHead from '../../components/SectionHead.astro';
+import CollectionCards from '../../components/CollectionCards.astro';
+import ContactBand from '../../components/ContactBand.astro';
+import Icon from '../../components/Icon.astro';
+import { COLLECTIONS, collectionPath, type Collection } from '../../data/collections';
+import { service } from '../../data/services';
+import { href } from '../../lib/paths';
+import { breadcrumbs } from '../../lib/schema';
+
+export function getStaticPaths() {
+  return COLLECTIONS.map((c) => ({ params: { slug: c.slug }, props: { c } }));
+}
+
+const { c } = Astro.props as { c: Collection };
+const s = service(c.service);
+const at = COLLECTIONS.indexOf(c);
+const others = [1, 2, 3].map((k) => COLLECTIONS[(at + k) % COLLECTIONS.length]);
+const path = collectionPath(c);
+const KIND = { events: 'Event', products: 'Product', portraits: 'Portrait or headshot' } as const;
+
+const title = `${c.title} ${c.title.length > 22 ? 'Gallery' : 'Photography Gallery'} | WVR Photography`;
+const description = `${c.blurb} Photographed by Matthew Weaver of WVR Photography in Fenton, MI.`.slice(0, 160);
+---
+
+<Base title={title} description={description.length >= 70 ? description : `${description} See the gallery.`} path={path} schema={[breadcrumbs([{ name: 'Portfolio', path: '/portfolio/' }, { name: c.title, path }])]}>
+  <PageHead kicker={c.kind} title={c.title} lede={c.blurb} crumbs={[{ name: 'Portfolio', path: '/portfolio/' }, { name: c.title, path }]} />
+
+  <section class="band--tight ink gal" aria-label={`${c.title} photos`}>
+    <div class="wrap">
+      <Gallery photos={c.photos} />
+      <div class="gal__end">
+        <a class="arrow" href={href('/portfolio/')}><Icon name="back" /><span>All galleries</span></a>
+        <a class="btn primary" href="#quote">Book a shoot like this<Icon name="arrow" class="arr" /></a>
+      </div>
+    </div>
+  </section>
+
+  {
+    c.review && (
+      <section class="band white" aria-labelledby="said">
+        <div class="wrap narrow">
+          <SectionHead id="said" eyebrow="From the client" title="What they said." layout="left" />
+          <Reviews ids={[c.review]} />
+        </div>
+      </section>
+    )
+  }
+
+  <ContactBand title="Planning a shoot like this? Let's **talk.**" intro={`Tell me about it and I will get back to you with a free quote. More on [${s.name.toLowerCase()}](${s.path}).`} kind={KIND[c.service]} />
+
+  <section class="band paper" aria-labelledby="more">
+    <div class="wrap">
+      <SectionHead id="more" eyebrow="Keep looking" title="More galleries." layout="left" />
+      <CollectionCards items={others} />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .gal {
+    padding-top: 0;
+  }
+
+  .gal__end {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line-ink);
+  }
+
+  .narrow {
+    max-width: 48rem;
+  }
+</style>

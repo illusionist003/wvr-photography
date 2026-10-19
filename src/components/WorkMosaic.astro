@@ -1,0 +1,189 @@
+---
+/* Selected work on a fixed grid of rows, each tile one of his photos with a
+   caption naming the gallery it comes from. Tiles link to that gallery. The
+   layout is drawn for seven tiles: a big one and a tall one, a row of three,
+   then a tall and a wide one. Fewer tiles reuse the start of that pattern. */
+import Icon from './Icon.astro';
+import Photo from './Photo.astro';
+import { photo, type PhotoId } from '../data/photos';
+import { COLLECTIONS, collectionPath } from '../data/collections';
+import { href } from '../lib/paths';
+
+interface Props {
+  tiles: { id: PhotoId; focus?: string; label?: string }[];
+}
+const { tiles } = Astro.props;
+
+const home = (id: PhotoId) => COLLECTIONS.find((c) => c.photos.includes(id));
+---
+
+<ul class="wm">
+  {
+    tiles.map((t, i) => {
+      const c = home(t.id);
+      const p = photo(t.id);
+      const body = (
+        <>
+          <Photo id={t.id} widths={[480, 800, 1200, 1600]} sizes={i === 0 ? '(min-width: 56rem) 66vw, 100vw' : '(min-width: 56rem) 40vw, 100vw'} class="frame zoom wm__img" />
+          <span class="wm__cap">
+            <span class="wm__t">{t.label ?? p.caption}</span>
+            {c && (
+              <span class="wm__c">
+                {c.title}
+                <Icon name="arrow" />
+              </span>
+            )}
+          </span>
+        </>
+      );
+      return (
+        <li class={`wm__tile wm__tile--${i + 1}`} style={t.focus ? `--focus:${t.focus}` : undefined}>
+          {c ? (
+            <a href={href(collectionPath(c))} aria-label={`${t.label ?? p.caption}, from the ${c.title} gallery`}>
+              {body}
+            </a>
+          ) : (
+            <div>{body}</div>
+          )}
+        </li>
+      );
+    })
+  }
+</ul>
+
+<style>
+  .wm {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: clamp(9rem, 38vw, 14rem);
+    gap: 0.6rem;
+  }
+
+  .wm__tile > a,
+  .wm__tile > div {
+    position: relative;
+    display: block;
+    height: 100%;
+    color: var(--on-ink);
+    text-decoration: none;
+  }
+
+  .wm__tile :global(.wm__img) {
+    position: absolute;
+    inset: 0;
+  }
+
+  .wm__tile :global(.wm__img img) {
+    object-position: var(--focus, 50% 50%);
+  }
+
+  .wm__cap {
+    position: absolute;
+    inset: auto 0 0 0;
+    display: grid;
+    gap: 0.1rem;
+    padding: 2.5rem 0.9rem 0.8rem;
+    border-radius: 0 0 var(--r) var(--r);
+    background: linear-gradient(to top, rgb(10 13 14 / 0.82), rgb(10 13 14 / 0));
+    font-size: 0.875rem;
+    line-height: 1.35;
+  }
+
+  .wm__t {
+    font-weight: 620;
+  }
+
+  .wm__c {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: rgb(242 244 243 / 0.8);
+  }
+
+  .wm__c :global(svg) {
+    width: 0.95rem;
+    height: 0.95rem;
+    transition: translate 0.22s var(--ease);
+  }
+
+  a:hover .wm__c :global(svg) {
+    translate: 0.2rem 0;
+  }
+
+  /* phones: a big one, then pairs, with the tall ones taking two rows */
+  .wm__tile--1 {
+    grid-column: 1 / -1;
+    grid-row: span 2;
+  }
+
+  .wm__tile--2,
+  .wm__tile--6 {
+    grid-row: span 2;
+  }
+
+  .wm__tile--5 {
+    grid-column: 1 / -1;
+    grid-row: span 2;
+  }
+
+  .wm__tile--7 {
+    grid-row: span 2;
+  }
+
+  /* a set of six ends on one wide photo instead of a gap */
+  .wm__tile--6:last-child {
+    grid-column: 1 / -1;
+  }
+
+  @media (min-width: 56rem) {
+    .wm {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      grid-auto-rows: clamp(11rem, 17vw, 17.5rem);
+      gap: 0.75rem;
+    }
+
+    .wm__cap {
+      padding: 3rem 1.1rem 1rem;
+      font-size: 0.9375rem;
+    }
+
+    .wm__tile--1 {
+      grid-column: 1 / 9;
+      grid-row: 1 / 3;
+    }
+
+    .wm__tile--2 {
+      grid-column: 9 / 13;
+      grid-row: 1 / 3;
+    }
+
+    .wm__tile--3 {
+      grid-column: 1 / 5;
+      grid-row: 3;
+    }
+
+    .wm__tile--4 {
+      grid-column: 5 / 9;
+      grid-row: 3;
+    }
+
+    .wm__tile--5 {
+      grid-column: 9 / 13;
+      grid-row: 3;
+    }
+
+    .wm__tile--6 {
+      grid-column: 1 / 6;
+      grid-row: 4 / 6;
+    }
+
+    .wm__tile--7 {
+      grid-column: 6 / 13;
+      grid-row: 4 / 6;
+    }
+
+    .wm__tile--6:last-child {
+      grid-column: 1 / 13;
+    }
+  }
+</style>
