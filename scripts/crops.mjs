@@ -14,7 +14,7 @@ mkdirSync(OUT, { recursive: true });
 export const FOCUS = {
   'event-mastermind-keynote': 0.5,
   'sport-gym-sparring': 0.47,
-  'portrait-couple-lake': 0.4,
+  'portrait-couple-lake': 0.6,
   'product-coffee-bags': 0.47,
   'event-mud-truck-smoke': 0.7,
   'event-gala-stage': 0.5,
