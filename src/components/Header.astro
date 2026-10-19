@@ -243,12 +243,21 @@ const inGalleries = current.startsWith('/portfolio') || current.startsWith('/por
 
   /* ----- Galleries: three layers ----- */
 
+  /* the link and its arrow sit side by side without overlapping, so each is a
+     full-size target */
+  .hdr__nav .dd > a {
+    padding-right: 0.2rem;
+  }
+
+  .hdr__nav .dd > a::after {
+    right: 0.2rem;
+  }
+
   .dd__btn {
     display: grid;
     place-items: center;
-    width: 2rem;
+    width: 1.75rem;
     height: 2.75rem;
-    margin-left: -0.55rem;
     padding: 0;
     border: 0;
     background: none;

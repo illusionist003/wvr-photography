@@ -57,28 +57,36 @@ const PATH = 'content/manifest.json';
 const HISTORY = 'content/history/';
 const KEEP_HISTORY = 80;
 
-/* Always the latest version: head() asks the store directly (never cached),
-   then the file is fetched with that version's ETag in the query, so the CDN
-   cannot answer with an older copy. (The SDK's useCache: false only works for
-   private stores; this one is public so the photos can be served.) */
+/* The latest version, read so that a save can never land on top of something
+   the editor did not see. head() asks the store for the current ETag; the
+   file is then fetched with that ETag in the query so the CDN cannot answer
+   from an older copy. (The SDK's useCache: false only works for private
+   stores; this one is public so the photos can be served.) Right after a
+   save the store can still hand back the previous copy for a moment, so the
+   ETag returned is always the one of the copy actually read: if that copy is
+   old, the next save is refused as a conflict instead of overwriting newer
+   work. */
 export async function readContent(): Promise<{ content: Content | null; etag: string | null }> {
-  let meta;
-  try {
-    meta = await head(PATH);
-  } catch (e) {
-    if (e instanceof BlobNotFoundError) return { content: null, etag: null };
-    throw e;
-  }
-  const etag = meta.etag.replace(/^W\//, '');
-  const strip = (t: string | null) => (t || '').replace(/^W\//, '');
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const bust = attempt === 0 ? etag.replace(/"/g, '') : `${Date.now()}-${attempt}`;
-    const res = await fetch(`${meta.url}?v=${encodeURIComponent(bust)}`, { cache: 'no-store' });
+  const strip = (t: string | null | undefined) => (t || '').replace(/^W\//, '');
+  let last: { content: Content; etag: string | null } | null = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    let meta;
+    try {
+      meta = await head(PATH);
+    } catch (e) {
+      if (e instanceof BlobNotFoundError) return { content: null, etag: null };
+      throw e;
+    }
+    const want = strip(meta.etag);
+    const res = await fetch(`${meta.url}?v=${encodeURIComponent(want.replace(/"/g, ''))}-${attempt}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`content read failed: ${res.status}`);
-    const text = await res.text();
-    if (strip(res.headers.get('etag')) === etag || attempt === 2) return { content: upgrade(JSON.parse(text)), etag };
+    const content = upgrade(await res.json());
+    const got = strip(res.headers.get('etag'));
+    if (got && got === want) return { content, etag: got };
+    last = { content, etag: got || null };
+    await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
   }
-  throw new Error('unreachable');
+  return last!;
 }
 
 export class Conflict extends Error {}

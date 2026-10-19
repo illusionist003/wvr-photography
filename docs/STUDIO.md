@@ -3,6 +3,22 @@
 Matthew's login for managing galleries: **https://wvr-admin.vercel.app**
 (Vercel project `wvr-admin`, team `modern-apex`; code in `admin/`).
 
+## Three layers
+
+Albums hold galleries, galleries hold photos, in the studio and on the site:
+
+- Studio: **Albums** list, tap an album to see its galleries and its details
+  (name, a line about it, cover, delete when empty), tap a gallery to see its
+  photos. The back button always goes up one layer.
+- Site: the **Galleries** menu opens to every album with its galleries (a panel
+  on desktop that opens on hover or with the arrow button, an accordion in the
+  phone menu). `/portfolio/` lists the albums, `/portfolio/<album>/` lists that
+  album's galleries, `/portfolio-collections/<gallery>/` shows the photos, with
+  breadcrumbs Galleries / album / gallery.
+- An album only appears on the site once it has a published gallery with photos.
+- The three original groups (Businesses and events, Sports and action, People
+  and places) became the first three albums.
+
 ## What he can do
 
 - Sign in once per device with the passphrase (Keychain: service `apex-memory`,
@@ -17,15 +33,20 @@ Matthew's login for managing galleries: **https://wvr-admin.vercel.app**
 - Tap a photo: caption, description for screen readers, make it the cover,
   move earlier or later, move to another gallery, remove.
 - Select several photos: move them or remove them together.
-- Reorder galleries, change their section, publish or hide them, delete them.
-- Sections: rename, add a line of intro, reorder, add, delete when empty.
+- Create albums, rename them, write a line about them, pick the cover,
+  reorder them, delete them once empty.
+- Reorder galleries within an album, move a gallery to another album, publish
+  or hide it, delete it.
 - Everything saves by itself. The header says when the website has caught up.
 
 ## How a change reaches the site
 
 1. The studio saves `content/manifest.json` in the Blob store (ETag checked, so
    a stale phone cannot overwrite the computer; every version is also kept
-   under `content/history/`, newest 80).
+   under `content/history/`, newest 80). Right after a save the store can
+   briefly hand back the previous copy; reads always carry the ETag of the copy
+   actually read, so a save made from an old copy is refused as a conflict,
+   never written over newer work.
 2. `https://wvr-admin.vercel.app/api/site` serves only what is published.
 3. The site workflow (`.github/workflows/deploy.yml`) checks every five minutes;
    if the published fingerprint differs from the live
