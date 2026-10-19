@@ -4,14 +4,14 @@
    first version of content/manifest.json. Refuses to run if content exists.
    Run from admin/: node --env-file=<env> --experimental-strip-types scripts/migrate.mjs */
 import { readFileSync } from 'node:fs';
-import { put, get } from '@vercel/blob';
+import { put, head } from '@vercel/blob';
 import { createRequire } from 'node:module';
 
 const sharp = createRequire(new URL('../../package.json', import.meta.url))('sharp');
 
 const SITE = new URL('../../', import.meta.url).pathname;
-const existing = await get('content/manifest.json', { access: 'public', useCache: false });
-if (existing && existing.statusCode === 200) {
+const existing = await head('content/manifest.json').catch(() => null);
+if (existing) {
   console.error('content/manifest.json already exists; not overwriting');
   process.exit(1);
 }

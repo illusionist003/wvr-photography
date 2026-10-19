@@ -42,7 +42,8 @@ const longTitle = `${c.title} Gallery${brand}`;
 const title = longTitle.length < 25 ? `${c.title} Gallery${brand}, Fenton MI` : longTitle.length <= 70 ? longTitle : `${clamp(c.title, 70 - brand.length)}${brand}`;
 
 const tail = 'Photographed by Matthew Weaver of WVR Photography in Fenton, MI.';
-const lead = c.blurb ? `${c.blurb.replace(/[.!?]?$/, '.')} ${tail}` : `${c.title}: ${c.photos.length} ${c.photos.length === 1 ? 'photo' : 'photos'} from a ${c.kind.toLowerCase()} shoot. ${tail}`;
+const count = `${c.photos.length} ${c.photos.length === 1 ? 'photo' : 'photos'}`;
+const lead = c.blurb ? `${c.blurb.replace(/[.!?]?$/, '.')} ${tail}` : `${c.title}, ${count} by Matthew Weaver of WVR Photography, an event, product and portrait photographer in Fenton, MI.`;
 const description = clamp(lead.length >= 70 ? lead : `${lead} See the gallery and get a free quote.`, 160);
 ---
 

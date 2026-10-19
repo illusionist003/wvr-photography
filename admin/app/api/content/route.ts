@@ -25,8 +25,10 @@ export async function PUT(req: Request) {
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }
-  const { content: current } = await readContent();
-  const next: Content = { ...doc, version: (current?.version ?? 0) + 1, updatedAt: new Date().toISOString() };
+  // the version the editor loaded is the one this save builds on (the ETag check guarantees it)
+  const base = Number((body.content as { version?: number }).version) || 0;
+  const next: Content = { ...doc, version: base + 1, updatedAt: new Date().toISOString() };
+  const { content: current } = await readContent().catch(() => ({ content: null }));
   try {
     const { etag } = await writeContent(next, body.etag ?? null);
     const before = current ? published(current).hash : '';

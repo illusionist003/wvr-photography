@@ -6,7 +6,7 @@
    The public site only ever sees the published projection (published()):
    visible galleries with at least one photo, and the sections they sit in. */
 import { createHash } from 'node:crypto';
-import { del, get, list, put, BlobPreconditionFailedError } from '@vercel/blob';
+import { BlobNotFoundError, BlobPreconditionFailedError, del, head, list, put } from '@vercel/blob';
 
 export const SERVICES = ['events', 'products', 'portraits'] as const;
 export type Service = (typeof SERVICES)[number];
@@ -53,11 +53,28 @@ const PATH = 'content/manifest.json';
 const HISTORY = 'content/history/';
 const KEEP_HISTORY = 80;
 
+/* Always the latest version: head() asks the store directly (never cached),
+   then the file is fetched with that version's ETag in the query, so the CDN
+   cannot answer with an older copy. (The SDK's useCache: false only works for
+   private stores; this one is public so the photos can be served.) */
 export async function readContent(): Promise<{ content: Content | null; etag: string | null }> {
-  const res = await get(PATH, { access: 'public', useCache: false });
-  if (!res || res.statusCode !== 200) return { content: null, etag: null };
-  const text = await new Response(res.stream).text();
-  return { content: JSON.parse(text) as Content, etag: res.blob.etag };
+  let meta;
+  try {
+    meta = await head(PATH);
+  } catch (e) {
+    if (e instanceof BlobNotFoundError) return { content: null, etag: null };
+    throw e;
+  }
+  const etag = meta.etag.replace(/^W\//, '');
+  const strip = (t: string | null) => (t || '').replace(/^W\//, '');
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const bust = attempt === 0 ? etag.replace(/"/g, '') : `${Date.now()}-${attempt}`;
+    const res = await fetch(`${meta.url}?v=${encodeURIComponent(bust)}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`content read failed: ${res.status}`);
+    const text = await res.text();
+    if (strip(res.headers.get('etag')) === etag || attempt === 2) return { content: JSON.parse(text) as Content, etag };
+  }
+  throw new Error('unreachable');
 }
 
 export class Conflict extends Error {}
