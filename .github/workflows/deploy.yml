@@ -29,10 +29,12 @@ permissions:
 
 # The preview address follows whoever owns the repository
 # (https://<owner>.github.io/<repo>/), so it stays right after a transfer.
+# The studio's address comes from the repository variable GALLERY_API when it
+# is set (a copy of the studio on another Vercel account, docs/OWN-STUDIO.md).
 env:
   BASE_PATH: /${{ github.event.repository.name }}/
   SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
-  GALLERY_API: https://wvr-admin.vercel.app/api/site
+  GALLERY_API: ${{ vars.GALLERY_API || 'https://wvr-admin.vercel.app/api/site' }}
 
 jobs:
   check:

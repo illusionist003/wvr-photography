@@ -2,6 +2,8 @@
 
 Matthew's login for managing galleries: **https://wvr-admin.vercel.app**
 (Vercel project `wvr-admin`, team `modern-apex`; code in `admin/`).
+To run an identical copy on Matthew's own Vercel account with his own
+passphrase, see `docs/OWN-STUDIO.md`.
 
 ## Three layers
 
