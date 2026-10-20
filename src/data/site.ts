@@ -33,3 +33,7 @@ export const FORM = {
 } as const;
 
 export const QUOTE_CTA = 'Get a free quote';
+
+/* Where Matthew signs in to WVR Studio: the studio the build reads galleries
+   from (GALLERY_API, set by the deploy workflow), or the original one. */
+export const STUDIO_LOGIN = `${(process.env.GALLERY_API || 'https://wvr-admin.vercel.app/api/site').replace(/\/api\/site\/?$/, '')}/login`;

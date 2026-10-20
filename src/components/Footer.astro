@@ -1,8 +1,9 @@
 ---
-/* The footer: the full badge, where to find him, and the Modern Apex credit. */
+/* The footer: the full badge, where to find him, the Modern Apex credit, and
+   a small Log in for Matthew to reach WVR Studio. */
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
-import { BRAND, SOCIAL } from '../data/site';
+import { BRAND, SOCIAL, STUDIO_LOGIN } from '../data/site';
 import { SERVICES } from '../data/services';
 import { href } from '../lib/paths';
 
@@ -50,7 +51,10 @@ const year = new Date().getFullYear();
 
     <div class="ftr__base fine">
       <p>© {year} {BRAND.name}. All photos by {BRAND.owner}.</p>
-      <p>Website &amp; marketing by <a href="https://modernapexstrategies.com" target="_blank" rel="noopener">Modern Apex Strategies</a></p>
+      <div class="ftr__end">
+        <p>Website &amp; marketing by <a href="https://modernapexstrategies.com" target="_blank" rel="noopener">Modern Apex Strategies</a></p>
+        <a class="ftr__login" href={STUDIO_LOGIN} rel="nofollow">Log in</a>
+      </div>
     </div>
   </div>
 </footer>
@@ -111,6 +115,7 @@ const year = new Date().getFullYear();
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
+    align-items: center;
     gap: 0.5rem 2rem;
     margin-top: 3.5rem;
     padding-block: 1.5rem;
@@ -120,6 +125,29 @@ const year = new Date().getFullYear();
 
   .ftr__base a {
     color: var(--on-ink);
+  }
+
+  .ftr__end {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+  }
+
+  .ftr__login {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0 0.9rem;
+    border: 1px solid var(--line-ink);
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--on-ink-muted) !important;
+  }
+
+  .ftr__login:hover {
+    border-color: var(--teal-soft);
+    color: var(--on-ink) !important;
   }
 
   /* room for the phone bar */
