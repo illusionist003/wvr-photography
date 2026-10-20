@@ -6,7 +6,7 @@
 
 export async function dispatchBuild() {
   const token = process.env.GITHUB_DISPATCH_TOKEN;
-  const repo = process.env.GITHUB_REPO || 'nradachy-web/wvr-photography';
+  const repo = process.env.GITHUB_REPO || 'illusionist003/wvr-photography';
   if (!token) return false;
   const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/deploy.yml/dispatches`, {
     method: 'POST',
@@ -16,4 +16,4 @@ export async function dispatchBuild() {
   return res.ok;
 }
 
-export const SITE_URL = (process.env.SITE_URL || 'https://nradachy-web.github.io/wvr-photography').replace(/\/$/, '');
+export const SITE_URL = (process.env.SITE_URL || 'https://illusionist003.github.io/wvr-photography').replace(/\/$/, '');
